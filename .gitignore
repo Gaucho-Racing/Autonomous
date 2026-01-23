@@ -1,1 +1,27 @@
 .env
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+
+# Datasets
+data/
+*.jpg
+*.png
+*.jpeg
+*.npy
+
+# YOLO / ML artifacts
+models/
+*.pt
+*.onnx
+*.engine
+*.cache
+
+# Logs
+runs/
+logs/
