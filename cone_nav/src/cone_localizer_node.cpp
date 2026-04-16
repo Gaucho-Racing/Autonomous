@@ -310,7 +310,7 @@ private:
       marker.color.g = g;
       marker.color.b = b;
       marker.color.a = 1.0;
-      marker.lifetime = rclcpp::Duration::from_seconds(0.3);
+      marker.lifetime = rclcpp::Duration::from_seconds(0.3).to_msg();
       markers.markers.push_back(marker);
     }
   }

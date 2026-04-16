@@ -1,0 +1,37 @@
+/**:
+  ros__parameters:
+    use_sim: false
+    camera_frame: "zed2i_left_camera_frame"
+    base_frame: "base_link"
+
+    trt_engine_path: "models/cone_yolo.engine"
+    trt_input_width: 640
+    trt_input_height: 640
+    trt_output_num_detections: 25200
+
+    detection_confidence_threshold: 0.5
+    nms_iou_threshold: 0.45
+    max_detection_depth: 15.0
+    min_detection_depth: 0.3
+    cone_cluster_radius: 0.4
+
+    lookahead_distance: 1.5
+    lookahead_min: 0.8
+    lookahead_max: 3.0
+    speed_target: 1.5
+    speed_max: 3.0
+    wheelbase: 0.32
+    steering_gain: 1.0
+    max_steering_angle: 0.4
+
+    path_smoothing_window: 5
+    min_cones_to_plan: 2
+    publish_rate_hz: 30.0
+    track_half_width: 0.75
+
+    real_image_topic: "/zed2i/zed_node/left/image_rect_color"
+    sim_image_topic: "/sim/camera/image_raw"
+    real_depth_topic: "/zed2i/zed_node/depth/depth_registered"
+    sim_depth_topic: "/sim/camera/depth"
+    real_camera_info_topic: "/zed2i/zed_node/left/camera_info"
+    sim_camera_info_topic: "/sim/camera/camera_info"
