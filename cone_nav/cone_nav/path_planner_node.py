@@ -5,7 +5,7 @@ from typing import List, Optional, Sequence, Tuple
 
 import message_filters
 import rclpy
-from geometry_msgs.msg import Pose, PoseArray, PoseStamped
+from geometry_msgs.msg import Point, Pose, PoseArray, PoseStamped
 from nav_msgs.msg import Path
 from rclpy.node import Node
 from visualization_msgs.msg import Marker, MarkerArray
@@ -184,10 +184,11 @@ class PathPlannerNode(Node):
         line.pose.orientation.w = 1.0
 
         for x, y in waypoints:
-            point = line.points.add()
+            point = Point()
             point.x = x
             point.y = y
             point.z = 0.03
+            line.points.append(point)
 
         markers.markers.append(line)
         return markers

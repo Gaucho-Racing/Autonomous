@@ -33,7 +33,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "rviz_config",
-                default_value=PathJoinSubstitution([pkg_share, "rviz", "viz.rviz"]),
+                default_value=PathJoinSubstitution([pkg_share, "config", "viz.rviz"]),
             ),
             DeclareLaunchArgument(
                 "sim_type",
