@@ -1,0 +1,94 @@
+CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/pure_pursuit.cpp:181:12: warning: unused parameter 'lookahead_distance' [-Wunused-parameter]
+  181 |     double lookahead_distance) {
+      |            ^
+1 warning generated.
+/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/controller_node.cpp:286:88: warning: unused parameter 'state' [-Wunused-parameter]
+  286 |     void publishTwist(const control::ControlCommand& cmd, const control::VehicleState& state) {
+      |                                                                                        ^
+/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/controller_node.cpp:315:54: warning: unused parameter 'state' [-Wunused-parameter]
+  315 |     void publishMarkers(const control::VehicleState& state, 
+      |                                                      ^
+In file included from /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/controller_node.cpp:34:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/rclcpp.hpp:155:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/executors.hpp:21:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/executor.hpp:37:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/executor_options.hpp:20:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/memory_strategies.hpp:18:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/memory_strategy.hpp:25:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_executable.hpp:20:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/callback_group.hpp:29:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/subscription_base.hpp:32:
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_subscription_callback.hpp:391:7: warning: 'set_deprecated<nav_msgs::msg::Path_<std::allocator<void>>>' is deprecated: use 'void(std::shared_ptr<const MessageT>)' instead [-Wdeprecated-declarations]
+  391 |       set_deprecated(static_cast<typename scbth::callback_type>(callback));
+      |       ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/subscription_factory.hpp:94:29: note: in instantiation of function template specialization 'rclcpp::AnySubscriptionCallback<nav_msgs::msg::Path_<std::allocator<void>>>::set<std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Path_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>>' requested here
+   94 |   any_subscription_callback.set(std::forward<CallbackT>(callback));
+      |                             ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/create_subscription.hpp:122:26: note: in instantiation of function template specialization 'rclcpp::create_subscription_factory<nav_msgs::msg::Path_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Path_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Path_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Path_<std::allocator<void>>>, nav_msgs::msg::Path_<std::allocator<void>>>' requested here
+  122 |   auto factory = rclcpp::create_subscription_factory<MessageT>(
+      |                          ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/create_subscription.hpp:190:26: note: in instantiation of function template specialization 'rclcpp::detail::create_subscription<nav_msgs::msg::Path_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Path_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Path_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Path_<std::allocator<void>>>, rclcpp::Node, rclcpp::Node, nav_msgs::msg::Path_<std::allocator<void>>>' requested here
+  190 |   return rclcpp::detail::create_subscription<
+      |                          ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/node_impl.hpp:99:18: note: in instantiation of function template specialization 'rclcpp::create_subscription<nav_msgs::msg::Path_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Path_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Path_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Path_<std::allocator<void>>>, rclcpp::Node>' requested here
+   99 |   return rclcpp::create_subscription<MessageT>(
+      |                  ^
+/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/controller_node.cpp:120:27: note: in instantiation of function template specialization 'rclcpp::Node::create_subscription<nav_msgs::msg::Path_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Path_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Path_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Path_<std::allocator<void>>>>' requested here
+  120 |         path_sub_ = this->create_subscription<nav_msgs::msg::Path>(
+      |                           ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_subscription_callback.hpp:405:5: note: 'set_deprecated<nav_msgs::msg::Path_<std::allocator<void>>>' has been explicitly marked deprecated here
+  405 |   [[deprecated("use 'void(std::shared_ptr<const MessageT>)' instead")]]
+      |     ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_subscription_callback.hpp:391:7: warning: 'set_deprecated<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>' is deprecated: use 'void(std::shared_ptr<const MessageT>)' instead [-Wdeprecated-declarations]
+  391 |       set_deprecated(static_cast<typename scbth::callback_type>(callback));
+      |       ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/subscription_factory.hpp:94:29: note: in instantiation of function template specialization 'rclcpp::AnySubscriptionCallback<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>::set<std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>>' requested here
+   94 |   any_subscription_callback.set(std::forward<CallbackT>(callback));
+      |                             ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/create_subscription.hpp:122:26: note: in instantiation of function template specialization 'rclcpp::create_subscription_factory<std_msgs::msg::Float64MultiArray_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, std_msgs::msg::Float64MultiArray_<std::allocator<void>>>' requested here
+  122 |   auto factory = rclcpp::create_subscription_factory<MessageT>(
+      |                          ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/create_subscription.hpp:190:26: note: in instantiation of function template specialization 'rclcpp::detail::create_subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, rclcpp::Node, rclcpp::Node, std_msgs::msg::Float64MultiArray_<std::allocator<void>>>' requested here
+  190 |   return rclcpp::detail::create_subscription<
+      |                          ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/node_impl.hpp:99:18: note: in instantiation of function template specialization 'rclcpp::create_subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, rclcpp::Node>' requested here
+   99 |   return rclcpp::create_subscription<MessageT>(
+      |                  ^
+/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/controller_node.cpp:124:28: note: in instantiation of function template specialization 'rclcpp::Node::create_subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>>' requested here
+  124 |         speed_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
+      |                            ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_subscription_callback.hpp:405:5: note: 'set_deprecated<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>' has been explicitly marked deprecated here
+  405 |   [[deprecated("use 'void(std::shared_ptr<const MessageT>)' instead")]]
+      |     ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_subscription_callback.hpp:391:7: warning: 'set_deprecated<nav_msgs::msg::Odometry_<std::allocator<void>>>' is deprecated: use 'void(std::shared_ptr<const MessageT>)' instead [-Wdeprecated-declarations]
+  391 |       set_deprecated(static_cast<typename scbth::callback_type>(callback));
+      |       ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/subscription_factory.hpp:94:29: note: in instantiation of function template specialization 'rclcpp::AnySubscriptionCallback<nav_msgs::msg::Odometry_<std::allocator<void>>>::set<std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Odometry_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>>' requested here
+   94 |   any_subscription_callback.set(std::forward<CallbackT>(callback));
+      |                             ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/create_subscription.hpp:122:26: note: in instantiation of function template specialization 'rclcpp::create_subscription_factory<nav_msgs::msg::Odometry_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Odometry_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Odometry_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Odometry_<std::allocator<void>>>, nav_msgs::msg::Odometry_<std::allocator<void>>>' requested here
+  122 |   auto factory = rclcpp::create_subscription_factory<MessageT>(
+      |                          ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/create_subscription.hpp:190:26: note: in instantiation of function template specialization 'rclcpp::detail::create_subscription<nav_msgs::msg::Odometry_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Odometry_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Odometry_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Odometry_<std::allocator<void>>>, rclcpp::Node, rclcpp::Node, nav_msgs::msg::Odometry_<std::allocator<void>>>' requested here
+  190 |   return rclcpp::detail::create_subscription<
+      |                          ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/node_impl.hpp:99:18: note: in instantiation of function template specialization 'rclcpp::create_subscription<nav_msgs::msg::Odometry_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Odometry_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Odometry_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Odometry_<std::allocator<void>>>, rclcpp::Node>' requested here
+   99 |   return rclcpp::create_subscription<MessageT>(
+      |                  ^
+/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/controller_node.cpp:128:27: note: in instantiation of function template specialization 'rclcpp::Node::create_subscription<nav_msgs::msg::Odometry_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Odometry_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Odometry_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Odometry_<std::allocator<void>>>>' requested here
+  128 |         odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+      |                           ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_subscription_callback.hpp:405:5: note: 'set_deprecated<nav_msgs::msg::Odometry_<std::allocator<void>>>' has been explicitly marked deprecated here
+  405 |   [[deprecated("use 'void(std::shared_ptr<const MessageT>)' instead")]]
+      |     ^
+5 warnings generated.

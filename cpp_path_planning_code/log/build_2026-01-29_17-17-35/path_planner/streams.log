@@ -1,0 +1,97 @@
+[0.014s] Invoking command in '/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/build/path_planner': CMAKE_PREFIX_PATH=/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae CONDA_PROMPT_MODIFIER=(ros2_fsae) SHLVL=3 _=/usr/bin/env /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/bin/cmake /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/path_planner -DCMAKE_INSTALL_PREFIX=/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner
+[0.051s] CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+[0.051s]   Compatibility with CMake < 3.10 will be removed from a future version of
+[0.051s]   CMake.
+[0.051s] 
+[0.051s]   Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+[0.051s]   to tell CMake that the project requires at least <min> but has been updated
+[0.051s]   to work with policies introduced by <max> or earlier.
+[0.052s] 
+[0.052s] 
+[0.158s] -- The C compiler identification is AppleClang 17.0.0.17000603
+[0.233s] -- The CXX compiler identification is AppleClang 17.0.0.17000603
+[0.264s] -- Detecting C compiler ABI info
+[0.412s] -- Detecting C compiler ABI info - done
+[0.422s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.423s] -- Detecting C compile features
+[0.423s] -- Detecting C compile features - done
+[0.431s] -- Detecting CXX compiler ABI info
+[0.573s] -- Detecting CXX compiler ABI info - done
+[0.585s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.585s] -- Detecting CXX compile features
+[0.586s] -- Detecting CXX compile features - done
+[0.608s] -- Found ament_cmake: 1.3.12 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/ament_cmake/cmake)
+[0.712s] -- Found Python3: /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/bin/python3 (found version "3.11.14") found components: Interpreter
+[0.959s] -- Found rclcpp: 16.0.13 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/rclcpp/cmake)
+[1.168s] -- Found rosidl_generator_c: 3.1.6 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/rosidl_generator_c/cmake)
+[1.199s] -- Found rosidl_adapter: 3.1.6 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/rosidl_adapter/cmake)
+[1.233s] -- Found rosidl_generator_cpp: 3.1.6 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/rosidl_generator_cpp/cmake)
+[1.272s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[1.327s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[1.520s] -- Checking for module 'yaml-0.1'
+[1.620s] --   Found yaml-0.1, version 0.2.5
+[1.932s] -- Found rmw_implementation_cmake: 6.1.2 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/rmw_implementation_cmake/cmake)
+[1.948s] -- Found rmw_cyclonedds_cpp: 1.3.4 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/rmw_cyclonedds_cpp/cmake)
+[2.053s] -- Using RMW implementation 'rmw_cyclonedds_cpp' as default
+[2.094s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+[2.243s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+[2.243s] -- Found Threads: TRUE
+[2.354s] -- Found nav_msgs: 4.9.0 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/nav_msgs/cmake)
+[2.456s] -- Found visualization_msgs: 4.9.0 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/visualization_msgs/cmake)
+[2.530s] -- Found ament_lint_auto: 0.12.12 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/ament_lint_auto/cmake)
+[2.706s] -- Added test 'copyright' to check source files copyright and LICENSE
+[2.708s] -- Added test 'cppcheck' to perform static code analysis on C / C++ code
+[2.708s] -- Configured cppcheck include dirs: $<BUILD_INTERFACE:/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/path_planner/include>
+[2.708s] -- Configured cppcheck exclude dirs and/or files: 
+[2.709s] -- Added test 'cpplint' to check C / C++ code against the Google style
+[2.709s] -- Configured cpplint exclude dirs and/or files: 
+[2.710s] -- Added test 'flake8' to check Python code syntax and style conventions
+[2.711s] -- Added test 'lint_cmake' to check CMake code style
+[2.712s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[2.714s] -- Added test 'uncrustify' to check C / C++ code style
+[2.714s] -- Configured uncrustify additional arguments: 
+[2.714s] -- Added test 'xmllint' to check XML markup files
+[2.720s] -- Configuring done (2.7s)
+[3.180s] -- Generating done (0.5s)
+[3.227s] -- Build files have been written to: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/build/path_planner
+[3.231s] Invoked command in '/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/build/path_planner' returned '0': CMAKE_PREFIX_PATH=/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae CONDA_PROMPT_MODIFIER=(ros2_fsae) SHLVL=3 _=/usr/bin/env /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/bin/cmake /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/path_planner -DCMAKE_INSTALL_PREFIX=/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner
+[3.232s] Invoking command in '/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/build/path_planner': CMAKE_PREFIX_PATH=/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae CONDA_PROMPT_MODIFIER=(ros2_fsae) SHLVL=3 _=/usr/bin/env /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/bin/cmake --build /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/build/path_planner -- -j14 -l14
+[3.312s] [ 25%] Building CXX object CMakeFiles/delaunay_planner.dir/src/delaunay_planner.cpp.o
+[3.986s] [ 50%] Linking CXX shared library libdelaunay_planner.dylib
+[4.033s] [ 50%] Built target delaunay_planner
+[4.062s] [ 75%] Building CXX object CMakeFiles/planner_node.dir/src/planner_node.cpp.o
+[5.806s] [100%] Linking CXX executable planner_node
+[5.864s] [100%] Built target planner_node
+[5.876s] Invoked command in '/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/build/path_planner' returned '0': CMAKE_PREFIX_PATH=/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae CONDA_PROMPT_MODIFIER=(ros2_fsae) SHLVL=3 _=/usr/bin/env /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/bin/cmake --build /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/build/path_planner -- -j14 -l14
+[5.894s] Invoking command in '/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/build/path_planner': CMAKE_PREFIX_PATH=/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae CONDA_PROMPT_MODIFIER=(ros2_fsae) SHLVL=3 _=/usr/bin/env /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/bin/cmake --install /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/build/path_planner
+[5.904s] -- Install configuration: ""
+[5.904s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/lib/libdelaunay_planner.dylib
+[5.904s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/lib/path_planner/planner_node
+[6.209s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/include
+[6.209s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/include/path_planner
+[6.209s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/include/path_planner/delaunay_planner.hpp
+[6.209s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/launch
+[6.210s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/launch/fsae_autonomous.launch.py
+[6.210s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/config
+[6.210s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/config/vehicle_params.yaml
+[6.210s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/ament_index/resource_index/package_run_dependencies/path_planner
+[6.211s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/ament_index/resource_index/parent_prefix_path/path_planner
+[6.211s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/environment/ament_prefix_path.sh
+[6.211s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/environment/ament_prefix_path.dsv
+[6.211s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/environment/path.sh
+[6.212s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/environment/path.dsv
+[6.212s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/local_setup.bash
+[6.212s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/local_setup.sh
+[6.212s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/local_setup.zsh
+[6.212s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/local_setup.dsv
+[6.213s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/package.dsv
+[6.213s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/ament_index/resource_index/packages/path_planner
+[6.213s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/cmake/export_path_plannerExport.cmake
+[6.213s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/cmake/export_path_plannerExport-noconfig.cmake
+[6.214s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/cmake/ament_cmake_export_include_directories-extras.cmake
+[6.214s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/cmake/ament_cmake_export_libraries-extras.cmake
+[6.214s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/cmake/ament_cmake_export_targets-extras.cmake
+[6.214s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/cmake/path_plannerConfig.cmake
+[6.215s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/cmake/path_plannerConfig-version.cmake
+[6.215s] -- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/path_planner/share/path_planner/package.xml
+[6.216s] Invoked command in '/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/build/path_planner' returned '0': CMAKE_PREFIX_PATH=/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae CONDA_PROMPT_MODIFIER=(ros2_fsae) SHLVL=3 _=/usr/bin/env /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/bin/cmake --install /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/build/path_planner

@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch arm64 -dynamiclib -Wl,-headerpad_max_install_names -o libpure_pursuit_lib.dylib -install_name @rpath/libpure_pursuit_lib.dylib CMakeFiles/pure_pursuit_lib.dir/src/pure_pursuit.cpp.o

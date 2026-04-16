@@ -1,0 +1,54 @@
+{
+	"cmake" : 
+	{
+		"generator" : 
+		{
+			"multiConfig" : false,
+			"name" : "Unix Makefiles"
+		},
+		"paths" : 
+		{
+			"cmake" : "/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/bin/cmake",
+			"cpack" : "/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/bin/cpack",
+			"ctest" : "/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/bin/ctest",
+			"root" : "/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/cmake-4.2"
+		},
+		"version" : 
+		{
+			"isDirty" : false,
+			"major" : 4,
+			"minor" : 2,
+			"patch" : 3,
+			"string" : "4.2.3",
+			"suffix" : ""
+		}
+	},
+	"objects" : 
+	[
+		{
+			"jsonFile" : "codemodel-v2-33f1b0f078a540014b0f.json",
+			"kind" : "codemodel",
+			"version" : 
+			{
+				"major" : 2,
+				"minor" : 9
+			}
+		}
+	],
+	"reply" : 
+	{
+		"client-colcon-cmake" : 
+		{
+			"codemodel-v2" : 
+			{
+				"jsonFile" : "codemodel-v2-33f1b0f078a540014b0f.json",
+				"kind" : "codemodel",
+				"version" : 
+				{
+					"major" : 2,
+					"minor" : 9
+				}
+			}
+		}
+	}
+}

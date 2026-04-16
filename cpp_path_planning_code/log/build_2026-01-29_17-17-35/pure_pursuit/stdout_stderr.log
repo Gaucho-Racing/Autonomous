@@ -1,0 +1,174 @@
+CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- The C compiler identification is AppleClang 17.0.0.17000603
+-- The CXX compiler identification is AppleClang 17.0.0.17000603
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 1.3.12 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/ament_cmake/cmake)
+-- Found Python3: /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/bin/python3 (found version "3.11.14") found components: Interpreter
+-- Found rclcpp: 16.0.13 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/rclcpp/cmake)
+-- Found rosidl_generator_c: 3.1.6 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/rosidl_generator_c/cmake)
+-- Found rosidl_adapter: 3.1.6 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/rosidl_adapter/cmake)
+-- Found rosidl_generator_cpp: 3.1.6 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/rosidl_generator_cpp/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Checking for module 'yaml-0.1'
+--   Found yaml-0.1, version 0.2.5
+-- Found rmw_implementation_cmake: 6.1.2 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/rmw_implementation_cmake/cmake)
+-- Found rmw_cyclonedds_cpp: 1.3.4 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/rmw_cyclonedds_cpp/cmake)
+-- Using RMW implementation 'rmw_cyclonedds_cpp' as default
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Found nav_msgs: 4.9.0 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/nav_msgs/cmake)
+-- Found visualization_msgs: 4.9.0 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/visualization_msgs/cmake)
+-- Found ackermann_msgs: 2.0.2 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/ackermann_msgs/cmake)
+-- Found ament_lint_auto: 0.12.12 (/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/share/ament_lint_auto/cmake)
+-- Added test 'copyright' to check source files copyright and LICENSE
+-- Added test 'cppcheck' to perform static code analysis on C / C++ code
+-- Configured cppcheck include dirs: $<BUILD_INTERFACE:/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/include>
+-- Configured cppcheck exclude dirs and/or files: 
+-- Added test 'cpplint' to check C / C++ code against the Google style
+-- Configured cpplint exclude dirs and/or files: 
+-- Added test 'lint_cmake' to check CMake code style
+-- Added test 'uncrustify' to check C / C++ code style
+-- Configured uncrustify additional arguments: 
+-- Added test 'xmllint' to check XML markup files
+-- Configuring done (2.7s)
+-- Generating done (0.4s)
+-- Build files have been written to: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/build/pure_pursuit
+[ 25%] Building CXX object CMakeFiles/pure_pursuit_lib.dir/src/pure_pursuit.cpp.o
+/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/pure_pursuit.cpp:181:12: warning: unused parameter 'lookahead_distance' [-Wunused-parameter]
+  181 |     double lookahead_distance) {
+      |            ^
+1 warning generated.
+[ 50%] Linking CXX shared library libpure_pursuit_lib.dylib
+[ 50%] Built target pure_pursuit_lib
+[ 75%] Building CXX object CMakeFiles/controller_node.dir/src/controller_node.cpp.o
+/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/controller_node.cpp:286:88: warning: unused parameter 'state' [-Wunused-parameter]
+  286 |     void publishTwist(const control::ControlCommand& cmd, const control::VehicleState& state) {
+      |                                                                                        ^
+/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/controller_node.cpp:315:54: warning: unused parameter 'state' [-Wunused-parameter]
+  315 |     void publishMarkers(const control::VehicleState& state, 
+      |                                                      ^
+In file included from /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/controller_node.cpp:34:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/rclcpp.hpp:155:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/executors.hpp:21:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/executor.hpp:37:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/executor_options.hpp:20:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/memory_strategies.hpp:18:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/memory_strategy.hpp:25:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_executable.hpp:20:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/callback_group.hpp:29:
+In file included from /opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/subscription_base.hpp:32:
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_subscription_callback.hpp:391:7: warning: 'set_deprecated<nav_msgs::msg::Path_<std::allocator<void>>>' is deprecated: use 'void(std::shared_ptr<const MessageT>)' instead [-Wdeprecated-declarations]
+  391 |       set_deprecated(static_cast<typename scbth::callback_type>(callback));
+      |       ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/subscription_factory.hpp:94:29: note: in instantiation of function template specialization 'rclcpp::AnySubscriptionCallback<nav_msgs::msg::Path_<std::allocator<void>>>::set<std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Path_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>>' requested here
+   94 |   any_subscription_callback.set(std::forward<CallbackT>(callback));
+      |                             ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/create_subscription.hpp:122:26: note: in instantiation of function template specialization 'rclcpp::create_subscription_factory<nav_msgs::msg::Path_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Path_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Path_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Path_<std::allocator<void>>>, nav_msgs::msg::Path_<std::allocator<void>>>' requested here
+  122 |   auto factory = rclcpp::create_subscription_factory<MessageT>(
+      |                          ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/create_subscription.hpp:190:26: note: in instantiation of function template specialization 'rclcpp::detail::create_subscription<nav_msgs::msg::Path_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Path_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Path_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Path_<std::allocator<void>>>, rclcpp::Node, rclcpp::Node, nav_msgs::msg::Path_<std::allocator<void>>>' requested here
+  190 |   return rclcpp::detail::create_subscription<
+      |                          ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/node_impl.hpp:99:18: note: in instantiation of function template specialization 'rclcpp::create_subscription<nav_msgs::msg::Path_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Path_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Path_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Path_<std::allocator<void>>>, rclcpp::Node>' requested here
+   99 |   return rclcpp::create_subscription<MessageT>(
+      |                  ^
+/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/controller_node.cpp:120:27: note: in instantiation of function template specialization 'rclcpp::Node::create_subscription<nav_msgs::msg::Path_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Path_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Path_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Path_<std::allocator<void>>>>' requested here
+  120 |         path_sub_ = this->create_subscription<nav_msgs::msg::Path>(
+      |                           ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_subscription_callback.hpp:405:5: note: 'set_deprecated<nav_msgs::msg::Path_<std::allocator<void>>>' has been explicitly marked deprecated here
+  405 |   [[deprecated("use 'void(std::shared_ptr<const MessageT>)' instead")]]
+      |     ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_subscription_callback.hpp:391:7: warning: 'set_deprecated<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>' is deprecated: use 'void(std::shared_ptr<const MessageT>)' instead [-Wdeprecated-declarations]
+  391 |       set_deprecated(static_cast<typename scbth::callback_type>(callback));
+      |       ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/subscription_factory.hpp:94:29: note: in instantiation of function template specialization 'rclcpp::AnySubscriptionCallback<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>::set<std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>>' requested here
+   94 |   any_subscription_callback.set(std::forward<CallbackT>(callback));
+      |                             ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/create_subscription.hpp:122:26: note: in instantiation of function template specialization 'rclcpp::create_subscription_factory<std_msgs::msg::Float64MultiArray_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, std_msgs::msg::Float64MultiArray_<std::allocator<void>>>' requested here
+  122 |   auto factory = rclcpp::create_subscription_factory<MessageT>(
+      |                          ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/create_subscription.hpp:190:26: note: in instantiation of function template specialization 'rclcpp::detail::create_subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, rclcpp::Node, rclcpp::Node, std_msgs::msg::Float64MultiArray_<std::allocator<void>>>' requested here
+  190 |   return rclcpp::detail::create_subscription<
+      |                          ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/node_impl.hpp:99:18: note: in instantiation of function template specialization 'rclcpp::create_subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, rclcpp::Node>' requested here
+   99 |   return rclcpp::create_subscription<MessageT>(
+      |                  ^
+/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/controller_node.cpp:124:28: note: in instantiation of function template specialization 'rclcpp::Node::create_subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>>' requested here
+  124 |         speed_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
+      |                            ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_subscription_callback.hpp:405:5: note: 'set_deprecated<std_msgs::msg::Float64MultiArray_<std::allocator<void>>>' has been explicitly marked deprecated here
+  405 |   [[deprecated("use 'void(std::shared_ptr<const MessageT>)' instead")]]
+      |     ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_subscription_callback.hpp:391:7: warning: 'set_deprecated<nav_msgs::msg::Odometry_<std::allocator<void>>>' is deprecated: use 'void(std::shared_ptr<const MessageT>)' instead [-Wdeprecated-declarations]
+  391 |       set_deprecated(static_cast<typename scbth::callback_type>(callback));
+      |       ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/subscription_factory.hpp:94:29: note: in instantiation of function template specialization 'rclcpp::AnySubscriptionCallback<nav_msgs::msg::Odometry_<std::allocator<void>>>::set<std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Odometry_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>>' requested here
+   94 |   any_subscription_callback.set(std::forward<CallbackT>(callback));
+      |                             ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/create_subscription.hpp:122:26: note: in instantiation of function template specialization 'rclcpp::create_subscription_factory<nav_msgs::msg::Odometry_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Odometry_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Odometry_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Odometry_<std::allocator<void>>>, nav_msgs::msg::Odometry_<std::allocator<void>>>' requested here
+  122 |   auto factory = rclcpp::create_subscription_factory<MessageT>(
+      |                          ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/create_subscription.hpp:190:26: note: in instantiation of function template specialization 'rclcpp::detail::create_subscription<nav_msgs::msg::Odometry_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Odometry_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Odometry_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Odometry_<std::allocator<void>>>, rclcpp::Node, rclcpp::Node, nav_msgs::msg::Odometry_<std::allocator<void>>>' requested here
+  190 |   return rclcpp::detail::create_subscription<
+      |                          ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/node_impl.hpp:99:18: note: in instantiation of function template specialization 'rclcpp::create_subscription<nav_msgs::msg::Odometry_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Odometry_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Odometry_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Odometry_<std::allocator<void>>>, rclcpp::Node>' requested here
+   99 |   return rclcpp::create_subscription<MessageT>(
+      |                  ^
+/Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/src/pure_pursuit/src/controller_node.cpp:128:27: note: in instantiation of function template specialization 'rclcpp::Node::create_subscription<nav_msgs::msg::Odometry_<std::allocator<void>>, std::__bind<void (fsae::ros2::PurePursuitNode::*)(std::shared_ptr<nav_msgs::msg::Odometry_<std::allocator<void>>>), fsae::ros2::PurePursuitNode *, const std::placeholders::__ph<1> &>, std::allocator<void>, rclcpp::Subscription<nav_msgs::msg::Odometry_<std::allocator<void>>>, rclcpp::message_memory_strategy::MessageMemoryStrategy<nav_msgs::msg::Odometry_<std::allocator<void>>>>' requested here
+  128 |         odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+      |                           ^
+/opt/homebrew/Caskroom/miniforge/base/envs/ros2_fsae/include/rclcpp/rclcpp/any_subscription_callback.hpp:405:5: note: 'set_deprecated<nav_msgs::msg::Odometry_<std::allocator<void>>>' has been explicitly marked deprecated here
+  405 |   [[deprecated("use 'void(std::shared_ptr<const MessageT>)' instead")]]
+      |     ^
+5 warnings generated.
+[100%] Linking CXX executable controller_node
+[100%] Built target controller_node
+-- Install configuration: ""
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/lib/libpure_pursuit_lib.dylib
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/lib/pure_pursuit/controller_node
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/include
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/include/.DS_Store
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/include/pure_pursuit
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/include/pure_pursuit/pure_pursuit.hpp
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/launch
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/config
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/ament_index/resource_index/package_run_dependencies/pure_pursuit
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/ament_index/resource_index/parent_prefix_path/pure_pursuit
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/environment/ament_prefix_path.sh
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/environment/ament_prefix_path.dsv
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/environment/path.sh
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/environment/path.dsv
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/local_setup.bash
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/local_setup.sh
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/local_setup.zsh
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/local_setup.dsv
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/package.dsv
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/ament_index/resource_index/packages/pure_pursuit
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/cmake/export_pure_pursuitExport.cmake
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/cmake/export_pure_pursuitExport-noconfig.cmake
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/cmake/ament_cmake_export_include_directories-extras.cmake
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/cmake/ament_cmake_export_libraries-extras.cmake
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/cmake/ament_cmake_export_targets-extras.cmake
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/cmake/pure_pursuitConfig.cmake
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/cmake/pure_pursuitConfig-version.cmake
+-- Installing: /Users/adi/Desktop/PycharmProjects/AutonomousGR/cpp_path_planning_code/install/pure_pursuit/share/pure_pursuit/package.xml
