@@ -16,6 +16,8 @@ data/
 
 # YOLO / ML artifacts
 models/
+!cone_nav/models/
+!cone_nav/models/README.md
 *.pt
 *.onnx
 *.engine
