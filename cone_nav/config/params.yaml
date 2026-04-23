@@ -28,6 +28,9 @@
     min_cones_to_plan: 2
     publish_rate_hz: 30.0
     track_half_width: 0.75
+    spline_samples_per_segment: 6
+    delaunay_max_edge_length: 6.0
+    path_min_forward_x: -0.2
 
     real_image_topic: "/zed2i/zed_node/left/image_rect_color"
     sim_image_topic: "/sim/camera/image_raw"
@@ -35,3 +38,7 @@
     sim_depth_topic: "/sim/camera/depth"
     real_camera_info_topic: "/zed2i/zed_node/left/camera_info"
     sim_camera_info_topic: "/sim/camera/camera_info"
+    real_right_image_topic: "/zed2i/zed_node/right/image_rect_color"
+    sim_right_image_topic: "/sim/camera/right/image_raw"
+    real_imu_topic: "/zed2i/zed_node/imu/data"
+    sim_imu_topic: "/sim/imu"

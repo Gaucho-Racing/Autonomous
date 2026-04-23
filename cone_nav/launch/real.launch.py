@@ -1,6 +1,7 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
@@ -11,6 +12,9 @@ def generate_launch_description():
     params_file = LaunchConfiguration("params_file")
     engine_path = LaunchConfiguration("engine_path")
     rviz_config = LaunchConfiguration("rviz_config")
+    enable_orbslam = LaunchConfiguration("enable_orbslam")
+    orbslam_vocabulary_file = LaunchConfiguration("orbslam_vocabulary_file")
+    orbslam_settings_file = LaunchConfiguration("orbslam_settings_file")
 
     zed_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -43,6 +47,17 @@ def generate_launch_description():
                 "rviz_config",
                 default_value=PathJoinSubstitution([pkg_share, "config", "viz.rviz"]),
             ),
+            DeclareLaunchArgument("enable_orbslam", default_value="true"),
+            DeclareLaunchArgument(
+                "orbslam_vocabulary_file",
+                default_value="/opt/orbslam3/Vocabulary/ORBvoc.txt",
+            ),
+            DeclareLaunchArgument(
+                "orbslam_settings_file",
+                default_value=PathJoinSubstitution(
+                    [pkg_share, "config", "orbslam3_zed2i_stereo_inertial.yaml"]
+                ),
+            ),
             zed_launch,
             Node(
                 package="tf2_ros",
@@ -57,6 +72,19 @@ def generate_launch_description():
                     "0.0",
                     "base_link",
                     "zed2i_left_camera_frame",
+                ],
+            ),
+            Node(
+                package="orbslam3",
+                executable="stereo-inertial",
+                name="orbslam3_stereo_inertial",
+                output="screen",
+                condition=IfCondition(enable_orbslam),
+                arguments=[orbslam_vocabulary_file, orbslam_settings_file, "true"],
+                remappings=[
+                    ("/camera/left/image_raw", "/zed2i/zed_node/left/image_rect_color"),
+                    ("/camera/right/image_raw", "/zed2i/zed_node/right/image_rect_color"),
+                    ("/imu", "/zed2i/zed_node/imu/data"),
                 ],
             ),
             Node(

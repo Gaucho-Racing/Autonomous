@@ -12,6 +12,9 @@ def generate_launch_description():
     engine_path = LaunchConfiguration("engine_path")
     rviz_config = LaunchConfiguration("rviz_config")
     sim_type = LaunchConfiguration("sim_type")
+    enable_orbslam = LaunchConfiguration("enable_orbslam")
+    orbslam_vocabulary_file = LaunchConfiguration("orbslam_vocabulary_file")
+    orbslam_settings_file = LaunchConfiguration("orbslam_settings_file")
 
     common_parameters = [
         params_file,
@@ -40,6 +43,17 @@ def generate_launch_description():
                 default_value="f1tenth",
                 description="Simulation bridge to launch: f1tenth or fsae",
             ),
+            DeclareLaunchArgument("enable_orbslam", default_value="false"),
+            DeclareLaunchArgument(
+                "orbslam_vocabulary_file",
+                default_value="/opt/orbslam3/Vocabulary/ORBvoc.txt",
+            ),
+            DeclareLaunchArgument(
+                "orbslam_settings_file",
+                default_value=PathJoinSubstitution(
+                    [pkg_share, "config", "orbslam3_zed2i_stereo_inertial.yaml"]
+                ),
+            ),
             Node(
                 package="f1tenth_gym_ros",
                 executable="gym_bridge",
@@ -67,6 +81,19 @@ def generate_launch_description():
                     "0.0",
                     "base_link",
                     "zed2i_left_camera_frame",
+                ],
+            ),
+            Node(
+                package="orbslam3",
+                executable="stereo-inertial",
+                name="orbslam3_stereo_inertial",
+                output="screen",
+                condition=IfCondition(enable_orbslam),
+                arguments=[orbslam_vocabulary_file, orbslam_settings_file, "true"],
+                remappings=[
+                    ("/camera/left/image_raw", "/sim/camera/image_raw"),
+                    ("/camera/right/image_raw", "/sim/camera/right/image_raw"),
+                    ("/imu", "/sim/imu"),
                 ],
             ),
             Node(

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import math
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Set, Tuple
 
 import message_filters
 import rclpy
@@ -12,6 +12,9 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 
 Point2 = Tuple[float, float]
+LabeledPoint = Tuple[float, float, str]
+Triangle = Tuple[int, int, int]
+Edge = Tuple[int, int]
 
 
 def _pose_to_xy(pose: Pose) -> Point2:
@@ -41,6 +44,160 @@ def _rolling_average(points: Sequence[Point2], window: int) -> List[Point2]:
     return smoothed
 
 
+def _cross(a: Point2, b: Point2, c: Point2) -> float:
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+
+def _circumcircle_contains(
+    a: Point2, b: Point2, c: Point2, p: Point2, eps: float = 1e-9
+) -> bool:
+    ax = a[0] - p[0]
+    ay = a[1] - p[1]
+    bx = b[0] - p[0]
+    by = b[1] - p[1]
+    cx = c[0] - p[0]
+    cy = c[1] - p[1]
+
+    det = (
+        (ax * ax + ay * ay) * (bx * cy - by * cx)
+        - (bx * bx + by * by) * (ax * cy - ay * cx)
+        + (cx * cx + cy * cy) * (ax * by - ay * bx)
+    )
+
+    orientation = _cross(a, b, c)
+    if orientation > 0.0:
+        return det > eps
+    return det < -eps
+
+
+def _delaunay_triangulation(points: Sequence[LabeledPoint]) -> Set[Triangle]:
+    """Naive O(n^4) Delaunay triangulation, fine for small cone counts."""
+    triangles: Set[Triangle] = set()
+    n_points = len(points)
+    if n_points < 3:
+        return triangles
+
+    xy = [(point[0], point[1]) for point in points]
+    for i in range(n_points - 2):
+        for j in range(i + 1, n_points - 1):
+            for k in range(j + 1, n_points):
+                a, b, c = xy[i], xy[j], xy[k]
+                if abs(_cross(a, b, c)) < 1e-9:
+                    continue
+
+                valid = True
+                for m in range(n_points):
+                    if m in (i, j, k):
+                        continue
+                    if _circumcircle_contains(a, b, c, xy[m]):
+                        valid = False
+                        break
+
+                if valid:
+                    triangles.add((i, j, k))
+
+    return triangles
+
+
+def _midpoints_from_delaunay(
+    points: Sequence[LabeledPoint],
+    max_edge_length: float,
+    min_forward_x: float,
+) -> List[Point2]:
+    triangles = _delaunay_triangulation(points)
+    edges: Set[Edge] = set()
+    for triangle in triangles:
+        i, j, k = triangle
+        for edge in ((i, j), (j, k), (i, k)):
+            edges.add(tuple(sorted(edge)))
+
+    midpoints: List[Point2] = []
+    for i, j in sorted(edges):
+        point_a = points[i]
+        point_b = points[j]
+        if point_a[2] == point_b[2]:
+            continue
+
+        edge_length = math.hypot(point_a[0] - point_b[0], point_a[1] - point_b[1])
+        if edge_length > max_edge_length:
+            continue
+
+        midpoint = ((point_a[0] + point_b[0]) * 0.5, (point_a[1] + point_b[1]) * 0.5)
+        if midpoint[0] < min_forward_x:
+            continue
+        midpoints.append(midpoint)
+
+    midpoints.sort(key=lambda point: (point[0], _distance(point), abs(point[1])))
+
+    deduped: List[Point2] = []
+    for point in midpoints:
+        if not deduped or math.hypot(point[0] - deduped[-1][0], point[1] - deduped[-1][1]) > 0.2:
+            deduped.append(point)
+    return deduped
+
+
+def _catmull_rom_spline(points: Sequence[Point2], samples_per_segment: int) -> List[Point2]:
+    if len(points) < 3 or samples_per_segment < 2:
+        return list(points)
+
+    padded = [points[0], *points, points[-1]]
+    smoothed: List[Point2] = [points[0]]
+
+    for idx in range(1, len(padded) - 2):
+        p0 = padded[idx - 1]
+        p1 = padded[idx]
+        p2 = padded[idx + 1]
+        p3 = padded[idx + 2]
+
+        for sample_idx in range(1, samples_per_segment + 1):
+            t = sample_idx / float(samples_per_segment)
+            t2 = t * t
+            t3 = t2 * t
+            x = 0.5 * (
+                (2.0 * p1[0])
+                + (-p0[0] + p2[0]) * t
+                + (2.0 * p0[0] - 5.0 * p1[0] + 4.0 * p2[0] - p3[0]) * t2
+                + (-p0[0] + 3.0 * p1[0] - 3.0 * p2[0] + p3[0]) * t3
+            )
+            y = 0.5 * (
+                (2.0 * p1[1])
+                + (-p0[1] + p2[1]) * t
+                + (2.0 * p0[1] - 5.0 * p1[1] + 4.0 * p2[1] - p3[1]) * t2
+                + (-p0[1] + 3.0 * p1[1] - 3.0 * p2[1] + p3[1]) * t3
+            )
+            smoothed.append((x, y))
+
+    return smoothed
+
+
+def _greedy_midpoints(left: Sequence[Point2], right: Sequence[Point2]) -> List[Point2]:
+    if not left or not right:
+        return []
+
+    unused_right = list(right)
+    midpoints: List[Point2] = []
+    for left_point in left:
+        if not unused_right:
+            break
+        nearest_idx = min(
+            range(len(unused_right)),
+            key=lambda idx: math.hypot(
+                left_point[0] - unused_right[idx][0],
+                left_point[1] - unused_right[idx][1],
+            ),
+        )
+        right_point = unused_right.pop(nearest_idx)
+        midpoints.append(
+            (
+                0.5 * (left_point[0] + right_point[0]),
+                0.5 * (left_point[1] + right_point[1]),
+            )
+        )
+
+    midpoints.sort(key=lambda point: (point[0], _distance(point)))
+    return midpoints
+
+
 class PathPlannerNode(Node):
     def __init__(self) -> None:
         super().__init__("path_planner_node")
@@ -50,12 +207,22 @@ class PathPlannerNode(Node):
         self.declare_parameter("min_cones_to_plan", 2)
         self.declare_parameter("publish_rate_hz", 30.0)
         self.declare_parameter("track_half_width", 0.75)
+        self.declare_parameter("spline_samples_per_segment", 6)
+        self.declare_parameter("delaunay_max_edge_length", 6.0)
+        self.declare_parameter("path_min_forward_x", -0.2)
 
         self.base_frame = self.get_parameter("base_frame").value
         self.path_smoothing_window = int(self.get_parameter("path_smoothing_window").value)
         self.min_cones_to_plan = int(self.get_parameter("min_cones_to_plan").value)
         self.publish_rate_hz = float(self.get_parameter("publish_rate_hz").value)
         self.track_half_width = float(self.get_parameter("track_half_width").value)
+        self.spline_samples_per_segment = int(
+            self.get_parameter("spline_samples_per_segment").value
+        )
+        self.delaunay_max_edge_length = float(
+            self.get_parameter("delaunay_max_edge_length").value
+        )
+        self.path_min_forward_x = float(self.get_parameter("path_min_forward_x").value)
 
         self.left_sub = message_filters.Subscriber(self, PoseArray, "/cones/left")
         self.right_sub = message_filters.Subscriber(self, PoseArray, "/cones/right")
@@ -72,7 +239,6 @@ class PathPlannerNode(Node):
 
         self.latest_left: List[Point2] = []
         self.latest_right: List[Point2] = []
-        self.latest_stamp = None
         self.last_path: Optional[Path] = None
         self.last_markers: Optional[MarkerArray] = None
 
@@ -80,13 +246,12 @@ class PathPlannerNode(Node):
         self.timer = self.create_timer(period, self._publish_timer)
 
         self.get_logger().info(
-            f"path_planner_node publishing /path at {self.publish_rate_hz:.1f} Hz"
+            "path_planner_node using Delaunay centerline with cubic spline smoothing"
         )
 
     def _cones_callback(self, left_msg: PoseArray, right_msg: PoseArray) -> None:
         self.latest_left = sorted((_pose_to_xy(pose) for pose in left_msg.poses), key=_distance)
         self.latest_right = sorted((_pose_to_xy(pose) for pose in right_msg.poses), key=_distance)
-        self.latest_stamp = self.get_clock().now().to_msg()
 
     def _publish_timer(self) -> None:
         waypoints = self._compute_waypoints(self.latest_left, self.latest_right)
@@ -113,34 +278,29 @@ class PathPlannerNode(Node):
         if total_cones < self.min_cones_to_plan:
             return []
 
-        midpoints: List[Point2] = []
         if left and right:
-            unused_right = list(right)
-            for left_point in left:
-                nearest_idx = min(
-                    range(len(unused_right)),
-                    key=lambda idx: math.hypot(
-                        left_point[0] - unused_right[idx][0],
-                        left_point[1] - unused_right[idx][1],
-                    ),
-                )
-                right_point = unused_right.pop(nearest_idx)
-                midpoints.append(
-                    (
-                        0.5 * (left_point[0] + right_point[0]),
-                        0.5 * (left_point[1] + right_point[1]),
-                    )
-                )
-                if not unused_right:
-                    break
+            labeled_points: List[LabeledPoint] = [(*point, "left") for point in left] + [
+                (*point, "right") for point in right
+            ]
+            midpoints = _midpoints_from_delaunay(
+                labeled_points, self.delaunay_max_edge_length, self.path_min_forward_x
+            )
+            if len(midpoints) < 2:
+                midpoints = _greedy_midpoints(left, right)
         elif left:
             midpoints = [(point[0], point[1] - self.track_half_width) for point in left]
-        elif right:
+        else:
             midpoints = [(point[0], point[1] + self.track_half_width) for point in right]
 
-        midpoints = sorted(midpoints, key=_distance)
-        smoothed = _rolling_average(midpoints, self.path_smoothing_window)
-        return [(0.0, 0.0)] + smoothed
+        if not midpoints:
+            return []
+
+        midpoints = sorted(midpoints, key=lambda point: (point[0], _distance(point)))
+        midpoints = _rolling_average(midpoints, self.path_smoothing_window)
+        if midpoints[0] != (0.0, 0.0):
+            midpoints = [(0.0, 0.0)] + midpoints
+        smoothed = _catmull_rom_spline(midpoints, self.spline_samples_per_segment)
+        return smoothed
 
     def _build_path(self, waypoints: Sequence[Point2]) -> Path:
         stamp = self.get_clock().now().to_msg()
