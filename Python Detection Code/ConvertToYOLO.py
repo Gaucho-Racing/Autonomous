@@ -1,43 +1,50 @@
-import os
 import json
+import random
 import shutil
 from pathlib import Path
+
 from PIL import Image
 from tqdm import tqdm
-import random
 
-# Paths
-FSOCO_DIR = Path("/Users/adi/Downloads/fsoco_bounding_boxes_train")
-OUTPUT_DIR = Path("/Users/adi/Desktop/PycharmProjects/Autonomous/data/yolo_format")
 
-# Class mapping (FSOCO -> YOLO index)
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent
+DEFAULT_FSOCO_DIR = Path.home() / "Downloads" / "fsoco_bounding_boxes_train"
+FSOCO_DIR = Path(
+    __import__("os").environ.get("FSOCO_DIR", str(DEFAULT_FSOCO_DIR))
+).expanduser().resolve()
+OUTPUT_DIR = REPO_ROOT / "data" / "yolo_format"
+DATA_CONFIG_PATH = REPO_ROOT / "fsoco.yaml"
+
+# Collapse everything to the 3 runtime classes expected by cone_nav.
 CLASS_MAP = {
     "blue_cone": 0,
-    "yellow_cone": 1,
-    "orange_cone": 2,
-    "large_orange_cone": 3,
-    "unknown_cone": 4,
-    # Handle variations in naming
     "blue": 0,
+    "yellow_cone": 1,
     "yellow": 1,
+    "orange_cone": 2,
+    "large_orange_cone": 2,
+    "big_orange": 2,
+    "orange_big": 2,
     "orange": 2,
-    "big_orange": 3,
-    "orange_big": 3,
 }
 
-# Train/val split ratio
+CLASS_NAMES = {
+    0: "blue_cone",
+    1: "yellow_cone",
+    2: "orange_cone",
+}
+
 TRAIN_RATIO = 0.85
 
 
 def supervisely_to_yolo(annotation, img_width, img_height):
-    """Convert Supervisely annotation to YOLO format."""
+    """Convert one Supervisely annotation into YOLO labels."""
     yolo_labels = []
 
-    objects = annotation.get("objects", [])
-    for obj in objects:
+    for obj in annotation.get("objects", []):
         class_title = obj.get("classTitle", "").lower().replace(" ", "_")
 
-        # Map to class index
         class_idx = None
         for key, idx in CLASS_MAP.items():
             if key in class_title:
@@ -47,44 +54,52 @@ def supervisely_to_yolo(annotation, img_width, img_height):
         if class_idx is None:
             continue
 
-        # Get bounding box
         points = obj.get("points", {})
         exterior = points.get("exterior", [])
+        if len(exterior) < 2:
+          continue
 
-        if len(exterior) >= 2:
-            x1, y1 = exterior[0]
-            x2, y2 = exterior[1]
+        x1, y1 = exterior[0]
+        x2, y2 = exterior[1]
 
-            # Convert to YOLO format (normalized center x, center y, width, height)
-            x_center = ((x1 + x2) / 2) / img_width
-            y_center = ((y1 + y2) / 2) / img_height
-            width = abs(x2 - x1) / img_width
-            height = abs(y2 - y1) / img_height
+        x_center = ((x1 + x2) / 2.0) / img_width
+        y_center = ((y1 + y2) / 2.0) / img_height
+        width = abs(x2 - x1) / img_width
+        height = abs(y2 - y1) / img_height
 
-            # Clamp values
-            x_center = max(0, min(1, x_center))
-            y_center = max(0, min(1, y_center))
-            width = max(0, min(1, width))
-            height = max(0, min(1, height))
+        x_center = max(0.0, min(1.0, x_center))
+        y_center = max(0.0, min(1.0, y_center))
+        width = max(0.0, min(1.0, width))
+        height = max(0.0, min(1.0, height))
 
-            if width > 0 and height > 0:
-                yolo_labels.append(f"{class_idx} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
+        if width > 0.0 and height > 0.0:
+            yolo_labels.append(
+                f"{class_idx} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}"
+            )
 
     return yolo_labels
 
 
-def convert_dataset():
-    """Convert entire FSOCO dataset to YOLO format."""
+def write_data_config():
+    """Write fsoco.yaml in the repo root."""
+    lines = [
+        f"path: {OUTPUT_DIR}",
+        "train: train/images",
+        "val: val/images",
+        "",
+        "names:",
+    ]
+    for class_idx, class_name in CLASS_NAMES.items():
+        lines.append(f"  {class_idx}: {class_name}")
 
-    # Create output directories
-    for split in ["train", "val"]:
-        (OUTPUT_DIR / split / "images").mkdir(parents=True, exist_ok=True)
-        (OUTPUT_DIR / split / "labels").mkdir(parents=True, exist_ok=True)
+    DATA_CONFIG_PATH.write_text("\n".join(lines) + "\n", encoding="ascii")
+    print(f"Wrote dataset config: {DATA_CONFIG_PATH}")
 
-    # Find all image/annotation pairs
+
+def find_samples():
+    """Discover image/annotation pairs in the FSOCO directory."""
     all_samples = []
 
-    # FSOCO structure: team_folders containing img/ and ann/ subfolders
     for team_dir in FSOCO_DIR.iterdir():
         if not team_dir.is_dir():
             continue
@@ -93,41 +108,59 @@ def convert_dataset():
         ann_dir = team_dir / "ann"
 
         if not img_dir.exists() or not ann_dir.exists():
-            # Try alternate structure
             img_dir = team_dir
             ann_dir = team_dir
 
         if not img_dir.exists():
             continue
 
-        # Find images
         for img_path in img_dir.glob("*.[jJpP][pPnN][gG]*"):
-            # Find corresponding annotation
-            ann_name = img_path.stem + ".json"
-            ann_path = ann_dir / ann_name
-
+            ann_path = ann_dir / f"{img_path.stem}.json"
             if not ann_path.exists():
-                # Try with image extension
-                ann_path = ann_dir / (img_path.name + ".json")
+                ann_path = ann_dir / f"{img_path.name}.json"
 
             if ann_path.exists():
                 all_samples.append((img_path, ann_path))
 
-    print(f"Found {len(all_samples)} image-annotation pairs")
+    return all_samples
 
-    if len(all_samples) == 0:
-        print("\nNo samples found! Check the FSOCO directory structure.")
+
+def reset_output_dirs():
+    """Remove stale converted data and recreate the YOLO folder layout."""
+    if OUTPUT_DIR.exists():
+        shutil.rmtree(OUTPUT_DIR)
+
+    for split in ("train", "val"):
+        (OUTPUT_DIR / split / "images").mkdir(parents=True, exist_ok=True)
+        (OUTPUT_DIR / split / "labels").mkdir(parents=True, exist_ok=True)
+
+
+def convert_dataset():
+    """Convert FSOCO into YOLO train/val folders inside this repo."""
+    print("=" * 60)
+    print("FSOCO -> YOLO Dataset Conversion")
+    print("=" * 60)
+    print(f"Source dataset: {FSOCO_DIR}")
+    print(f"Output dataset: {OUTPUT_DIR}")
+
+    if not FSOCO_DIR.exists():
+        print("\nDataset directory not found.")
         print(f"Expected location: {FSOCO_DIR}")
-        print("\nThe structure should be:")
+        print("Set FSOCO_DIR to override the source path.")
+        return
+
+    reset_output_dirs()
+    all_samples = find_samples()
+
+    print(f"Found {len(all_samples)} image-annotation pairs")
+    if not all_samples:
+        print("\nNo samples found. Expected a structure like:")
         print("  fsoco/")
         print("    team1/")
         print("      img/")
         print("      ann/")
-        print("    team2/")
-        print("      ...")
         return
 
-    # Shuffle and split
     random.seed(42)
     random.shuffle(all_samples)
 
@@ -137,54 +170,44 @@ def convert_dataset():
 
     print(f"Train: {len(train_samples)}, Val: {len(val_samples)}")
 
-    # Process samples
     stats = {"train": 0, "val": 0, "cones": 0}
-
-    for split, samples in [("train", train_samples), ("val", val_samples)]:
+    for split, samples in (("train", train_samples), ("val", val_samples)):
         print(f"\nProcessing {split} set...")
 
         for img_path, ann_path in tqdm(samples):
             try:
-                # Load image to get dimensions
                 with Image.open(img_path) as img:
                     img_width, img_height = img.size
 
-                # Load annotation
-                with open(ann_path, 'r') as f:
-                    annotation = json.load(f)
+                with ann_path.open("r", encoding="utf-8") as handle:
+                    annotation = json.load(handle)
 
-                # Convert to YOLO format
                 yolo_labels = supervisely_to_yolo(annotation, img_width, img_height)
-
-                if len(yolo_labels) == 0:
+                if not yolo_labels:
                     continue
 
-                # Generate unique filename
                 out_name = f"{img_path.parent.parent.name}_{img_path.stem}"
-
-                # Copy image
-                out_img_path = OUTPUT_DIR / split / "images" / f"{out_name}{img_path.suffix}"
-                shutil.copy(img_path, out_img_path)
-
-                # Write labels
+                out_img_path = OUTPUT_DIR / split / "images" / f"{out_name}{img_path.suffix.lower()}"
                 out_label_path = OUTPUT_DIR / split / "labels" / f"{out_name}.txt"
-                with open(out_label_path, 'w') as f:
-                    f.write("\n".join(yolo_labels))
+
+                shutil.copy(img_path, out_img_path)
+                out_label_path.write_text("\n".join(yolo_labels), encoding="ascii")
 
                 stats[split] += 1
                 stats["cones"] += len(yolo_labels)
+            except Exception as exc:
+                print(f"\nError processing {img_path}: {exc}")
 
-            except Exception as e:
-                print(f"\nError processing {img_path}: {e}")
-                continue
+    write_data_config()
 
-    print(f"\n{'='*60}")
-    print("Conversion complete!")
+    print(f"\n{'=' * 60}")
+    print("Conversion complete")
     print(f"Train images: {stats['train']}")
     print(f"Val images: {stats['val']}")
     print(f"Total cones: {stats['cones']}")
-    print(f"Output: {OUTPUT_DIR}")
-    print(f"{'='*60}")
+    print(f"Output dataset: {OUTPUT_DIR}")
+    print(f"Dataset config: {DATA_CONFIG_PATH}")
+    print(f"{'=' * 60}")
 
 
 if __name__ == "__main__":

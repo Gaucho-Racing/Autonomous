@@ -1,28 +1,30 @@
 """
-Train YOLOv8 on FSOCO dataset for cone detection.
+Train YOLO on the FSOCO cone dataset using repo-local paths.
 """
 
-import os
 from pathlib import Path
-from ultralytics import YOLO
+
 import torch
+from ultralytics import YOLO
 
-# Paths
-PROJECT_DIR = Path("/Users/adi/Desktop/PycharmProjects/Autonomous")
-DATA_CONFIG = PROJECT_DIR / "fsoco.yaml"
-OUTPUT_DIR = PROJECT_DIR / "models"
 
-# Training configuration
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent
+DATA_CONFIG = REPO_ROOT / "fsoco.yaml"
+DATA_DIR = REPO_ROOT / "data" / "yolo_format"
+OUTPUT_DIR = REPO_ROOT / "models"
+RUN_NAME = "fsoco_yolo26n"
+
 CONFIG = {
-    "model": "yolov8n.pt", # nano model - fast, good for edge deployment
+    "model": "yolo26n.pt",
     "epochs": 100,
     "imgsz": 640,
-    "batch": 8, # Adjust
-    "patience": 20, # Early stopping
+    "batch": 8,
+    "patience": 20,
     "device": "mps",
     "workers": 0,
-    "project": str(OUTPUT_DIR.resolve()),
-    "name": "fsoco_yolov8n",
+    "project": str(OUTPUT_DIR),
+    "name": RUN_NAME,
     "exist_ok": True,
     "pretrained": True,
     "optimizer": "AdamW",
@@ -50,50 +52,61 @@ CONFIG = {
 }
 
 
-def check_mps():
+def check_device():
     if torch.backends.mps.is_available():
         print("MPS available")
         return "mps"
-    else:
-        print("MPS not available, using CPU")
-        return "cpu"
+    if torch.cuda.is_available():
+        print("CUDA available")
+        return "cuda:0"
+    print("GPU not available, using CPU")
+    return "cpu"
+
+
+def existing_checkpoint():
+    weights_dir = OUTPUT_DIR / RUN_NAME / "weights"
+    last_ckpt = weights_dir / "last.pt"
+    best_ckpt = weights_dir / "best.pt"
+    if last_ckpt.exists():
+        return last_ckpt
+    if best_ckpt.exists():
+        return best_ckpt
+    return None
 
 
 def train():
-    """Run training."""
     print("=" * 60)
     print("FSOCO Cone Detection Training")
     print("=" * 60)
+    print(f"Repo root: {REPO_ROOT}")
+    print(f"Dataset config: {DATA_CONFIG}")
+    print(f"Dataset root: {DATA_DIR}")
+    print(f"Training output: {OUTPUT_DIR / RUN_NAME}")
 
-    # Check device
-    device = check_mps()
-    CONFIG["device"] = device
+    CONFIG["device"] = check_device()
 
-    # Check if dataset exists
     if not DATA_CONFIG.exists():
-        print(f"\nDataset config not found: {DATA_CONFIG}")
-        print("Run convert_to_yolo.py first")
+        print("\nDataset config not found.")
+        print("Run ConvertToYOLO.py first to generate fsoco.yaml and data/yolo_format.")
         return
 
-    # Check if data exists
-    data_dir = PROJECT_DIR / "data" / "yolo_format"
-    train_dir = data_dir / "train" / "images"
-    if not train_dir.exists() or len(list(train_dir.glob("*"))) == 0:
-        print(f"\n✗ Training data not found in: {train_dir}")
-        print("Run convert_to_yolo.py first")
+    train_dir = DATA_DIR / "train" / "images"
+    val_dir = DATA_DIR / "val" / "images"
+    if not train_dir.exists() or not any(train_dir.iterdir()):
+        print(f"\nTraining data not found in: {train_dir}")
+        print("Run ConvertToYOLO.py first.")
+        return
+    if not val_dir.exists() or not any(val_dir.iterdir()):
+        print(f"\nValidation data not found in: {val_dir}")
+        print("Run ConvertToYOLO.py first.")
         return
 
-    print(f"\nDataset config: {DATA_CONFIG}")
-    print(f"Training data: {train_dir}")
-
-    # Load model
-    last_ckpt = PROJECT_DIR / "models" / "fsoco_yolov8n" / "weights" / "last.pt"
-    model_path = str(last_ckpt) if last_ckpt.exists() else CONFIG["model"]
+    checkpoint = existing_checkpoint()
+    model_path = str(checkpoint) if checkpoint else CONFIG["model"]
 
     print(f"Loading model: {model_path}")
     model = YOLO(model_path)
 
-    # Start training
     print("\nStarting training...")
     print(f"Epochs: {CONFIG['epochs']}")
     print(f"Image size: {CONFIG['imgsz']}")
@@ -101,7 +114,7 @@ def train():
     print(f"Device: {CONFIG['device']}")
     print("-" * 60)
 
-    results = model.train(
+    model.train(
         data=str(DATA_CONFIG),
         epochs=CONFIG["epochs"],
         imgsz=CONFIG["imgsz"],
@@ -136,27 +149,22 @@ def train():
         deterministic=CONFIG["deterministic"],
     )
 
-    # Print results
+    best_model = OUTPUT_DIR / RUN_NAME / "weights" / "best.pt"
     print("\n" + "=" * 60)
-    print("Training Complete!")
+    print("Training complete")
     print("=" * 60)
+    print(f"Best model: {best_model}")
 
-    best_model = OUTPUT_DIR / CONFIG["name"] / "weights" / "best.pt"
-    print(f"\nBest model saved to: {best_model}")
+    if best_model.exists():
+        print("\nExporting ONNX next to the trained weights...")
+        model_best = YOLO(str(best_model))
+        model_best.export(format="onnx", imgsz=CONFIG["imgsz"], simplify=True)
+        print(f"ONNX export expected at: {best_model.with_suffix('.onnx')}")
 
-    # Export to ONNX for Jetson deployment
-    print("\nExporting to ONNX format")
-    model_best = YOLO(str(best_model))
-    model_best.export(format="onnx", imgsz=CONFIG["imgsz"], simplify=True)
-
-    onnx_path = best_model.with_suffix(".onnx")
-    print(f"ONNX model saved to: {onnx_path}")
-
-    print("\n" + "=" * 60)
-    print("Next steps:")
-    print("1. Copy best.pt and best.onnx to your Jetson")
-    print("2. On Jetson, convert ONNX to TensorRT for faster inference")
-    print("=" * 60)
+    print("\nNext steps:")
+    print("1. Validate with: yolo detect val model=models/fsoco_yolo26n/weights/best.pt data=fsoco.yaml")
+    print("2. Export TensorRT on the Jetson from best.pt")
+    print("3. Place the engine at cone_nav/models/cone_yolo.engine")
 
 
 if __name__ == "__main__":

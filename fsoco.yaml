@@ -1,0 +1,8 @@
+path: /Users/adi/Desktop/PycharmProjects/AutonomousGR/data/yolo_format
+train: train/images
+val: val/images
+
+names:
+  0: blue_cone
+  1: yellow_cone
+  2: orange_cone
