@@ -15,6 +15,8 @@ FSOCO_DIR = Path(
 ).expanduser().resolve()
 OUTPUT_DIR = REPO_ROOT / "data" / "yolo_format"
 DATA_CONFIG_PATH = REPO_ROOT / "fsoco.yaml"
+TRAIN_IMGSZ = 640
+MIN_BOX_SIZE_PX = 3.0
 
 # Collapse everything to the 3 runtime classes expected by cone_nav.
 CLASS_MAP = {
@@ -72,7 +74,8 @@ def supervisely_to_yolo(annotation, img_width, img_height):
         width = max(0.0, min(1.0, width))
         height = max(0.0, min(1.0, height))
 
-        if width > 0.0 and height > 0.0:
+        min_dim_px = min(width, height) * TRAIN_IMGSZ
+        if width > 0.0 and height > 0.0 and min_dim_px >= MIN_BOX_SIZE_PX:
             yolo_labels.append(
                 f"{class_idx} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}"
             )
@@ -142,6 +145,7 @@ def convert_dataset():
     print("=" * 60)
     print(f"Source dataset: {FSOCO_DIR}")
     print(f"Output dataset: {OUTPUT_DIR}")
+    print(f"Filtering boxes smaller than {MIN_BOX_SIZE_PX:.1f}px at imgsz={TRAIN_IMGSZ}")
 
     if not FSOCO_DIR.exists():
         print("\nDataset directory not found.")

@@ -41,12 +41,12 @@ CONFIG = {
     "hsv_s": 0.7,
     "hsv_v": 0.4,
     "degrees": 10,
-    "translate": 0.1,
-    "scale": 0.5,
+    "translate": 0.05,
+    "scale": 0.35,
     "flipud": 0.0,
     "fliplr": 0.5,
-    "mosaic": 1.0,
-    "mixup": 0.1,
+    "mosaic": 0.0,
+    "mixup": 0.0,
     "amp": False,
     "deterministic": False,
 }
@@ -92,6 +92,8 @@ def train():
 
     train_dir = DATA_DIR / "train" / "images"
     val_dir = DATA_DIR / "val" / "images"
+    train_cache = DATA_DIR / "train" / "labels.cache"
+    val_cache = DATA_DIR / "val" / "labels.cache"
     if not train_dir.exists() or not any(train_dir.iterdir()):
         print(f"\nTraining data not found in: {train_dir}")
         print("Run ConvertToYOLO.py first.")
@@ -100,6 +102,11 @@ def train():
         print(f"\nValidation data not found in: {val_dir}")
         print("Run ConvertToYOLO.py first.")
         return
+
+    for cache_file in (train_cache, val_cache):
+        if cache_file.exists():
+            cache_file.unlink()
+            print(f"Removed stale cache: {cache_file}")
 
     checkpoint = existing_checkpoint()
     model_path = str(checkpoint) if checkpoint else CONFIG["model"]
@@ -112,6 +119,7 @@ def train():
     print(f"Image size: {CONFIG['imgsz']}")
     print(f"Batch size: {CONFIG['batch']}")
     print(f"Device: {CONFIG['device']}")
+    print("Augmentations: mosaic=0.0, mixup=0.0, reduced translate/scale for dense tiny cones")
     print("-" * 60)
 
     model.train(
