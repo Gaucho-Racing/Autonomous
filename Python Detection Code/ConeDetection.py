@@ -2,6 +2,7 @@
 Train YOLO on the FSOCO cone dataset using repo-local paths.
 """
 
+import os
 from pathlib import Path
 
 import torch
@@ -19,9 +20,9 @@ CONFIG = {
     "model": "yolo26n.pt",
     "epochs": 100,
     "imgsz": 640,
-    "batch": 8,
+    "batch": 4,
     "patience": 20,
-    "device": "mps",
+    "device": "cpu",
     "workers": 0,
     "project": str(OUTPUT_DIR),
     "name": RUN_NAME,
@@ -53,13 +54,21 @@ CONFIG = {
 
 
 def check_device():
-    if torch.backends.mps.is_available():
-        print("MPS available")
-        return "mps"
+    requested = os.environ.get("TRAIN_DEVICE", "").strip()
+    if requested:
+        print(f"Using TRAIN_DEVICE override: {requested}")
+        return requested
+
     if torch.cuda.is_available():
         print("CUDA available")
         return "cuda:0"
-    print("GPU not available, using CPU")
+
+    if torch.backends.mps.is_available():
+        print("MPS is available, but disabled by default for YOLO26 training in this repo.")
+        print("Reason: repeated target-assignment / index errors on Apple MPS during training.")
+        print("Using CPU for stability. Set TRAIN_DEVICE=mps to force it anyway.")
+
+    print("Using CPU")
     return "cpu"
 
 
@@ -120,6 +129,8 @@ def train():
     print(f"Batch size: {CONFIG['batch']}")
     print(f"Device: {CONFIG['device']}")
     print("Augmentations: mosaic=0.0, mixup=0.0, reduced translate/scale for dense tiny cones")
+    if CONFIG["device"] == "cpu":
+        print("Note: CPU training is slower, but it avoids the Apple MPS crash path seen in prior runs.")
     print("-" * 60)
 
     model.train(
