@@ -36,8 +36,55 @@
     delaunay_max_edge_length: 6.0
     path_min_forward_x: -0.2
 
+    avoidance_enabled: true
+    avoidance_shadow_mode: false
+    avoidance_publish_rate_hz: 20.0
+    avoidance_grid_timeout_sec: 0.20
+    avoidance_path_timeout_sec: 0.30
+    avoidance_max_lateral_offset: 0.50
+    avoidance_offset_step: 0.10
+    avoidance_ramp_distance: 1.0
+    avoidance_boundary_margin: 0.22
+    avoidance_cone_match_distance: 0.75
+    avoidance_occupied_threshold: 50
+    avoidance_deviation_weight: 1.0
+    avoidance_clearance_weight: 0.35
+
+    obstacle_grid_topic: "/obstacles/local_grid"
+    obstacle_points_topic: "/obstacles/points"
+    obstacle_min_depth: 0.30
+    obstacle_max_depth: 8.0
+    obstacle_min_height: 0.05
+    obstacle_max_height: 1.50
+    obstacle_min_x: -0.30
+    obstacle_max_x: 8.0
+    obstacle_half_width: 3.0
+    obstacle_pixel_stride: 4
+    obstacle_grid_resolution: 0.10
+    obstacle_inflation_radius: 0.22
+    obstacle_persistence_sec: 0.25
+    obstacle_hood_max_x: 0.45
+    obstacle_hood_half_width: 0.20
+    obstacle_hood_max_height: 0.30
+
+    safety_enabled: true
+    safety_grid_timeout_sec: 0.20
+    safety_command_timeout_sec: 0.20
+    safety_braking_deceleration: 2.0
+    safety_system_latency_sec: 0.10
+    safety_stop_margin: 0.30
+    safety_corridor_half_width: 0.08
+    safety_occupied_threshold: 50
+
     sim_image_topic: "/sim/camera/image_raw"
     sim_right_image_topic: "/sim/camera/right/image_raw"
     sim_depth_topic: "/sim/camera/depth"
+    sim_right_camera_info_topic: "/sim/camera/right/camera_info"
     sim_camera_info_topic: "/sim/camera/camera_info"
     sim_imu_topic: "/sim/imu"
+    stereo_depth_topic: "/sim/camera/stereo_depth"
+    stereo_baseline: 0.12
+    stereo_min_disparity: 0
+    stereo_num_disparities: 128
+    stereo_block_size: 7
+    stereo_max_depth: 15.0

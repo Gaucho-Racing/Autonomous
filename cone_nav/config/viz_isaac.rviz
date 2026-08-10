@@ -51,8 +51,34 @@ Visualization Manager:
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Marker Topic: /path/markers
-      Name: Path Markers
+      Marker Topic: /path/nominal_markers
+      Name: Nominal Path Markers
+      Value: true
+    - Alpha: 0.55
+      Class: rviz_default_plugins/Map
+      Color Scheme: map
+      Enabled: true
+      Name: Inflated Obstacles
+      Topic: /obstacles/local_grid
+      Value: true
+    - Alpha: 1
+      Class: rviz_default_plugins/PointCloud2
+      Color Transformer: FlatColor
+      Decay Time: 0.2
+      Enabled: false
+      Name: Depth Obstacle Points
+      Point Size: 2
+      Style: Pixels
+      Topic: /obstacles/points
+      Value: false
+    - Class: rviz_default_plugins/Path
+      Color: 255; 180; 30
+      Enabled: true
+      Line Style: Lines
+      Line Width: 0.04
+      Name: Nominal Path
+      Pose Style: None
+      Topic: /path/nominal
       Value: true
     - Class: rviz_default_plugins/Path
       Color: 25; 255; 25

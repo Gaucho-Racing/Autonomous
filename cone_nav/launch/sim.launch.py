@@ -3,6 +3,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -13,6 +14,8 @@ def generate_launch_description():
     rviz_config = LaunchConfiguration("rviz_config")
     sim_type = LaunchConfiguration("sim_type")
     enable_orbslam = LaunchConfiguration("enable_orbslam")
+    avoidance_enabled = LaunchConfiguration("avoidance_enabled")
+    avoidance_shadow_mode = LaunchConfiguration("avoidance_shadow_mode")
     orbslam_vocabulary_file = LaunchConfiguration("orbslam_vocabulary_file")
     orbslam_settings_file = LaunchConfiguration("orbslam_settings_file")
 
@@ -21,6 +24,11 @@ def generate_launch_description():
         {
             "use_sim": True,
             "trt_engine_path": engine_path,
+            "avoidance_enabled": ParameterValue(avoidance_enabled, value_type=bool),
+            "safety_enabled": ParameterValue(avoidance_enabled, value_type=bool),
+            "avoidance_shadow_mode": ParameterValue(
+                avoidance_shadow_mode, value_type=bool
+            ),
         },
     ]
 
@@ -44,6 +52,12 @@ def generate_launch_description():
                 description="Simulation bridge to launch: f1tenth or fsae",
             ),
             DeclareLaunchArgument("enable_orbslam", default_value="false"),
+            DeclareLaunchArgument(
+                "avoidance_enabled",
+                default_value="false",
+                description="Enable only when the legacy bridge publishes registered depth.",
+            ),
+            DeclareLaunchArgument("avoidance_shadow_mode", default_value="false"),
             DeclareLaunchArgument(
                 "orbslam_vocabulary_file",
                 default_value="/opt/orbslam3/Vocabulary/ORBvoc.txt",
@@ -116,6 +130,24 @@ def generate_launch_description():
                 name="path_planner_node",
                 output="screen",
                 parameters=common_parameters,
+                remappings=[
+                    ("/path", "/path/nominal"),
+                    ("/path/markers", "/path/nominal_markers"),
+                ],
+            ),
+            Node(
+                package="cone_nav",
+                executable="depth_obstacle_node",
+                name="depth_obstacle_node",
+                output="screen",
+                parameters=common_parameters,
+            ),
+            Node(
+                package="cone_nav",
+                executable="obstacle_avoidance_node.py",
+                name="obstacle_avoidance_node",
+                output="screen",
+                parameters=common_parameters,
             ),
             Node(
                 package="cone_nav",
@@ -123,14 +155,22 @@ def generate_launch_description():
                 name="pure_pursuit_node",
                 output="screen",
                 parameters=common_parameters,
-                remappings=[
-                    (
-                        "/drive",
-                        PythonExpression(
-                            ["'/drive' if '", sim_type, "' == 'f1tenth' else '/cmd_vel'"]
-                        ),
-                    )
-                ],
+                remappings=[("/drive", "/drive_candidate")],
+            ),
+            Node(
+                package="cone_nav",
+                executable="drive_safety_node",
+                name="drive_safety_node",
+                output="screen",
+                parameters=common_parameters,
+            ),
+            Node(
+                package="cone_nav",
+                executable="ackermann_to_twist_node",
+                name="ackermann_to_twist_node",
+                output="screen",
+                condition=IfCondition(PythonExpression(["'", sim_type, "' == 'fsae'"])),
+                parameters=common_parameters,
             ),
             Node(
                 package="rviz2",

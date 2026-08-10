@@ -25,5 +25,9 @@ if [[ "${missing}" -ne 0 ]]; then
 fi
 
 timeout 10 ros2 topic echo --once /sim/camera/camera_info
+test "$(ros2 topic type /sim/camera/depth)" = "sensor_msgs/msg/Image"
+test "$(ros2 topic type /sim/camera/camera_info)" = "sensor_msgs/msg/CameraInfo"
 timeout 5 ros2 run tf2_ros tf2_echo base_link zed2i_left_camera_optical_frame ||
+  [[ "$?" -eq 124 ]]
+timeout 5 ros2 run tf2_ros tf2_echo zed2i_left_camera_optical_frame zed2i_right_camera_optical_frame ||
   [[ "$?" -eq 124 ]]

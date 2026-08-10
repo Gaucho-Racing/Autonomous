@@ -14,6 +14,7 @@
 
   <link name="zed2i_left_camera_frame"/>
   <link name="zed2i_left_camera_optical_frame"/>
+  <link name="zed2i_right_camera_optical_frame"/>
 
   <joint name="base_to_zed_left" type="fixed">
     <parent link="base_link"/>
@@ -26,5 +27,12 @@
     <parent link="zed2i_left_camera_frame"/>
     <child link="zed2i_left_camera_optical_frame"/>
     <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
+  </joint>
+
+  <!-- ZED 2i nominal 0.12 m stereo baseline; optical +X points right. -->
+  <joint name="zed_left_optical_to_right_optical" type="fixed">
+    <parent link="zed2i_left_camera_optical_frame"/>
+    <child link="zed2i_right_camera_optical_frame"/>
+    <origin xyz="0.12 0 0" rpy="0 0 0"/>
   </joint>
 </robot>

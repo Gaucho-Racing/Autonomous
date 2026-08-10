@@ -96,10 +96,47 @@ ament_target_dependencies(pure_pursuit_node
   ackermann_msgs
 )
 
+add_executable(depth_obstacle_node src/depth_obstacle_node.cpp)
+ament_target_dependencies(depth_obstacle_node
+  rclcpp
+  sensor_msgs
+  geometry_msgs
+  nav_msgs
+  cv_bridge
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
+)
+target_link_libraries(depth_obstacle_node ${OpenCV_LIBS})
+
+add_executable(stereo_depth_node src/stereo_depth_node.cpp)
+ament_target_dependencies(stereo_depth_node
+  rclcpp
+  sensor_msgs
+  cv_bridge
+  message_filters
+)
+target_link_libraries(stereo_depth_node ${OpenCV_LIBS})
+
+add_executable(drive_safety_node src/drive_safety_node.cpp)
+ament_target_dependencies(drive_safety_node
+  rclcpp
+  nav_msgs
+  ackermann_msgs
+)
+
+add_executable(ackermann_to_twist_node src/ackermann_to_twist_node.cpp)
+ament_target_dependencies(ackermann_to_twist_node
+  rclcpp
+  geometry_msgs
+  ackermann_msgs
+)
+
 ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
   cone_nav/path_planner_node.py
+  cone_nav/obstacle_avoidance_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -107,6 +144,10 @@ install(TARGETS
   cone_detector_node
   cone_localizer_node
   pure_pursuit_node
+  depth_obstacle_node
+  stereo_depth_node
+  drive_safety_node
+  ackermann_to_twist_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -123,6 +164,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
   ament_add_pytest_test(isaac_contract test/test_isaac_contract.py)
+  ament_add_pytest_test(avoidance_algorithms test/test_avoidance_algorithms.py)
 endif()
 
 ament_package()

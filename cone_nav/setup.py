@@ -14,11 +14,12 @@ setup(
     zip_safe=True,
     maintainer="Adi",
     maintainer_email="adi@example.com",
-    description="Python path planner node for cone_nav.",
+    description="Python planning and obstacle avoidance nodes for cone_nav.",
     license="MIT",
     entry_points={
         "console_scripts": [
             "path_planner_node = cone_nav.path_planner_node:main",
+            "obstacle_avoidance_node = cone_nav.obstacle_avoidance_node:main",
         ],
     },
 )

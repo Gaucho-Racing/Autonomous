@@ -20,6 +20,11 @@ def parse_args():
     parser.add_argument("--resolution-width", type=int, default=1280)
     parser.add_argument("--resolution-height", type=int, default=720)
     parser.add_argument("--camera-rate", type=float, default=30.0)
+    parser.add_argument(
+        "--obstacle-scenario",
+        choices=("clear", "center", "right", "narrow", "blocked"),
+        default="center",
+    )
     parser.add_argument("--ros-domain-id", type=int, default=None)
     parser.add_argument(
         "--experience",
@@ -57,7 +62,7 @@ from isaacsim.core.experimental.utils import stage as stage_utils
 from isaacsim.core.simulation_manager import SimulationManager
 from isaacsim.sensors.experimental.rtx import RtxCamera
 from isaacsim.storage.native import get_assets_root_path
-from pxr import Gf, Sdf, UsdGeom, UsdLux
+from pxr import Gf, Sdf, UsdGeom, UsdLux, UsdPhysics
 
 
 ROBOT_PRIM = "/World/Leatherback"
@@ -104,6 +109,32 @@ def create_cone(stage, name, x, y, color):
     cone.CreateDisplayColorAttr([Gf.Vec3f(*color)])
     xform = UsdGeom.Xformable(cone.GetPrim())
     xform.AddTranslateOp().Set(Gf.Vec3d(x, y, 0.175))
+    UsdPhysics.CollisionAPI.Apply(cone.GetPrim())
+
+
+def create_box_obstacle(stage, name, x, y, length, width, height, color):
+    box = UsdGeom.Cube.Define(stage, f"/World/Obstacles/{name}")
+    box.CreateSizeAttr(1.0)
+    box.CreateDisplayColorAttr([Gf.Vec3f(*color)])
+    xform = UsdGeom.Xformable(box.GetPrim())
+    xform.AddTranslateOp().Set(Gf.Vec3d(x, y, height * 0.5))
+    xform.AddScaleOp().Set(Gf.Vec3f(length, width, height))
+    UsdPhysics.CollisionAPI.Apply(box.GetPrim())
+
+
+def create_obstacle_scenario(stage):
+    UsdGeom.Xform.Define(stage, "/World/Obstacles")
+    if ARGS.obstacle_scenario == "clear":
+        return
+    if ARGS.obstacle_scenario == "center":
+        create_box_obstacle(stage, "center", 5.0, 0.0, 0.45, 0.25, 0.55, (0.8, 0.1, 0.1))
+    elif ARGS.obstacle_scenario == "right":
+        create_box_obstacle(stage, "right", 5.0, -0.25, 0.45, 0.35, 0.55, (0.8, 0.1, 0.1))
+    elif ARGS.obstacle_scenario == "narrow":
+        create_box_obstacle(stage, "narrow_left", 5.0, 0.50, 0.45, 0.30, 0.55, (0.8, 0.1, 0.1))
+        create_box_obstacle(stage, "narrow_right", 5.0, -0.50, 0.45, 0.30, 0.55, (0.8, 0.1, 0.1))
+    elif ARGS.obstacle_scenario == "blocked":
+        create_box_obstacle(stage, "blocked", 5.0, 0.0, 0.45, 1.35, 0.55, (0.8, 0.1, 0.1))
 
 
 def create_scene():
@@ -140,6 +171,7 @@ def create_scene():
         create_cone(stage, f"blue_{index}", x, -0.75 + offset, (0.0, 0.2, 1.0))
     create_cone(stage, "orange_start_left", 1.2, 0.35, (1.0, 0.25, 0.0))
     create_cone(stage, "orange_start_right", 1.2, -0.35, (1.0, 0.25, 0.0))
+    create_obstacle_scenario(stage)
 
 
 def create_ros_graph():

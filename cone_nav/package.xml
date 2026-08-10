@@ -2,7 +2,7 @@
 <package format="3">
   <name>cone_nav</name>
   <version>0.1.0</version>
-  <description>Reactive cone navigation with TensorRT cone detection, ZED depth localization, centerline planning, and pure pursuit control.</description>
+  <description>Reactive cone navigation with TensorRT detection, stereo-depth obstacle avoidance, pure pursuit, and command safety.</description>
   <maintainer email="adi@example.com">Adi</maintainer>
   <license>MIT</license>
 
