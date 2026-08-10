@@ -1,294 +1,100 @@
 # AutonomousGR
 
-AutonomousGR is a ROS 2 Humble workspace for cone-based autonomous navigation on an F1TENTH-style vehicle. The active runtime package is `cone_nav`: it takes ZED 2i stereo input, runs cone detection with a TensorRT YOLO engine, projects detections into 3D with depth, builds a centerline, filters that route through a depth-based local obstacle grid, and follows the safe path with pure pursuit and independent command supervision.
+AutonomousGR is a ROS 2 Humble autonomy stack for an F1TENTH-style vehicle using a ZED 2i stereo camera. It detects track cones, estimates their 3D positions, builds a centerline, avoids depth obstacles, follows the safe path with pure pursuit, and supervises the final Ackermann command.
 
-The repo also includes Python utilities for dataset conversion, model training, and live webcam testing.
+The stack targets:
 
-## Repository Layout
+- Jetson Orin Nano, CUDA, TensorRT, and ZED 2i on the vehicle
+- NVIDIA Isaac Sim 6.0.1 on Ubuntu 22.04 with an RTX GPU
+- ROS 2 Humble and `ackermann_msgs/AckermannDriveStamped`
 
-```text
-.
-+-- cone_nav/                 # Main ROS 2 package
-|   +-- cone_nav/             # Python ROS node package
-|   +-- src/                  # C++ ROS 2 nodes
-|   +-- config/               # Params, RViz, ORB-SLAM config
-|   +-- launch/               # Real and sim launch files
-|   +-- models/               # TensorRT engine location
-|   +-- urdf/                 # Lightweight sim robot description
-+-- isaac_sim/                # Isaac Sim 6.0.1 scene and Brev launcher
-+-- models/                   # Local training outputs (.pt, .onnx), ignored by git
-+-- data/                     # Local YOLO-format dataset, ignored by git
-+-- Python Detection Code/    # Training, conversion, webcam tools
-+-- URCA Documents/           # Project documents
-+-- fsoco.yaml                # YOLO dataset config
-+-- README.md
-+-- License.md
-```
-
-## Runtime Architecture
-
-The ROS runtime graph keeps the public `/path` and Ackermann `/drive` contracts stable while separating nominal planning from obstacle avoidance and command safety:
+## System overview
 
 ```text
-Image -> cone detections -> /path/nominal -> obstacle avoidance -> /path
-Registered depth -> local obstacle grid -----------^          |
-Registered depth -> drive safety <---- /drive_candidate <---- pure pursuit
-                                      drive safety -> /drive
+Left image -> TensorRT cone detector -> depth localization -> left/right cones
+                                                            |
+                                                            v
+                                                centerline /path/nominal
+                                                            |
+Registered depth -> inflated local obstacle grid -----------+
+                                                            v
+                                                  obstacle avoidance -> /path
+                                                                        |
+                                                                        v
+                                                      pure pursuit -> /drive_candidate
+                                                                        |
+Obstacle grid + freshness + braking envelope ---------------------------+
+                                                                        v
+                                                         drive safety -> /drive
 ```
 
-Main nodes:
+Core nodes:
 
-- `cone_detector_node`  
-  C++ TensorRT/CUDA detector. Subscribes to the left image and publishes `/cone_detections` as `vision_msgs/Detection2DArray`.
+- `cone_detector_node`: TensorRT/CUDA cone detection.
+- `cone_localizer_node`: registered-depth projection into `base_link`.
+- `path_planner_node.py`: Delaunay/greedy cone pairing and spline-smoothed nominal centerline.
+- `depth_obstacle_node`: ground/hood filtering, point projection, grid inflation, and `/obstacles/local_grid`.
+- `obstacle_avoidance_node.py`: laterally shifted paths constrained by obstacles and cone boundaries.
+- `pure_pursuit_node`: steering and speed generation on `/drive_candidate`.
+- `drive_safety_node`: sole `/drive` publisher; stops or limits speed using obstacle clearance and data freshness.
+- `stereo_depth_node`: optional OpenCV SGBM depth generation for Isaac stereo qualification.
 
-- `cone_localizer_node`  
-  C++ depth localizer. Synchronizes detections with registered depth, back-projects cone centers into 3D, transforms them to `base_link`, deduplicates nearby detections, and publishes `/cones/left`, `/cones/right`, and `/cones/all`.
-
-- `path_planner_node.py`  
-  Python planner. Builds and smooths the cone centerline. Launch files remap its output to `/path/nominal` and `/path/nominal_markers`.
-
-- `depth_obstacle_node`
-  C++ registered-depth processor. Back-projects valid pixels into `base_link`, filters the ground/hood/range, inflates vehicle clearance, and publishes `/obstacles/local_grid` plus `/obstacles/points`.
-
-- `obstacle_avoidance_node.py`
-  Samples laterally shifted, curvature-continuous local paths, rejects grid collisions and cone-boundary crossings, and publishes the selected safe route on `/path`. No feasible route produces an empty path.
-
-- `pure_pursuit_node`  
-  C++ controller. Selects a lookahead point on `/path` and publishes `/drive_candidate` through a launch remap.
-
-- `drive_safety_node`
-  The sole `/drive` publisher. It checks the commanded Ackermann arc against the current obstacle grid, applies the configured braking envelope, and stops on stale depth or commands.
-
-Optional localization / visual-inertial odometry:
-
-- `orbslam3 stereo-inertial`  
-  Launched from `real.launch.py` by default. Uses stereo images plus IMU data to provide visual-inertial SLAM / odometry. The launch wiring is present in this repo; production accuracy depends on a correct ORB-SLAM3 vocabulary and a real ZED 2i stereo-inertial calibration file.
-
-## Topics
-
-Primary runtime inputs:
+The externally important contracts remain:
 
 ```text
-/zed2i/zed_node/left/image_rect_color
-/zed2i/zed_node/right/image_rect_color
-/zed2i/zed_node/depth/depth_registered
-/zed2i/zed_node/left/camera_info
-/zed2i/zed_node/imu/data
+/path   nav_msgs/Path in base_link
+/drive  ackermann_msgs/AckermannDriveStamped
 ```
 
-Primary runtime outputs:
+## Repository layout
 
 ```text
-/cone_detections
-/cones/left
-/cones/right
-/cones/all
-/obstacles/local_grid
-/obstacles/points
-/path/nominal
-/path/nominal_markers
-/path
-/drive_candidate
-/drive
+cone_nav/                  ROS 2 package, nodes, launch files, config, RViz, URDF
+isaac_sim/                 Isaac scene, container launcher, and topic checks
+Python Detection Code/     dataset conversion, training, and webcam utilities
+fsoco.yaml                 YOLO dataset configuration
+URCA Documents/            project documents
 ```
 
-## Planning and Control
+## Requirements and model
 
-The planner is now built around:
-
-- left/right cone extraction in `base_link`
-- Delaunay triangulation over visible cones
-- cross-color edge midpoint extraction for centerline candidates
-- fallback greedy pairing when triangulation is sparse
-- cubic Catmull-Rom spline smoothing
-- pure pursuit on the smoothed path
-- local lateral candidate generation inside the cone corridor
-- inflated-depth collision checking
-- independent stopping-distance enforcement before `/drive`
-
-Relevant planner parameters in [params.yaml](/Users/adi/Desktop/PycharmProjects/AutonomousGR/cone_nav/config/params.yaml):
-
-```yaml
-path_smoothing_window: 5
-track_half_width: 0.75
-spline_samples_per_segment: 6
-delaunay_max_edge_length: 6.0
-path_min_forward_x: -0.2
-lookahead_distance: 1.5
-lookahead_min: 0.8
-lookahead_max: 3.0
-speed_target: 1.5
-speed_max: 3.0
-wheelbase: 0.32
-obstacle_inflation_radius: 0.22
-avoidance_max_lateral_offset: 0.55
-safety_grid_timeout_sec: 0.20
-safety_braking_deceleration: 2.0
-safety_stop_margin: 0.30
-```
-
-Obstacle avoidance is enabled by default for `real.launch.py` and
-`isaac.launch.py`. Use `avoidance_shadow_mode:=true` to compute safety state
-while continuing to publish the nominal path, or `avoidance_enabled:=false` to
-bypass avoidance and grid command checks during a controlled regression test.
-
-## Visual-Inertial Odometry / SLAM
-
-The real launch file supports stereo-inertial ORB-SLAM3 integration. It is enabled by default in:
-
-- [real.launch.py](/Users/adi/Desktop/PycharmProjects/AutonomousGR/cone_nav/launch/real.launch.py)
-
-It remaps ORB-SLAM3 inputs to:
-
-```text
-/zed2i/zed_node/left/image_rect_color
-/zed2i/zed_node/right/image_rect_color
-/zed2i/zed_node/imu/data
-```
-
-The starter ORB-SLAM3 settings file is:
-
-- [orbslam3_zed2i_stereo_inertial.yaml](/Users/adi/Desktop/PycharmProjects/AutonomousGR/cone_nav/config/orbslam3_zed2i_stereo_inertial.yaml)
-
-Important caveat:
-
-- The launch and config plumbing are in place.
-- The provided ORB-SLAM3 YAML is only a starter file.
-- Replace its camera intrinsics, stereo baseline, IMU noise terms, and body-camera transform with your actual ZED 2i calibration before trusting the output.
-
-Vocabulary file is passed at launch and defaults to:
-
-```text
-/opt/orbslam3/Vocabulary/ORBvoc.txt
-```
-
-## Dependencies
-
-Target platform:
-
-- Ubuntu 22.04
-- ROS 2 Humble
-- Jetson Orin Nano
-- CUDA
-- TensorRT
-- ZED 2i with ZED ROS 2 wrapper
-- ORB-SLAM3 ROS 2 wrapper for stereo-inertial mode
-
-Isaac Sim target:
-
-- NVIDIA Isaac Sim 6.0.1
-- Ubuntu 22.04 with ROS 2 Humble
-- NVIDIA RTX GPU; the supplied Brev launcher targets an L40S-class instance
-- Fast DDS with the same `ROS_DOMAIN_ID` in Isaac Sim and the ROS workspace
-- TensorRT 8 or 10; the detector contains compatibility paths for both APIs
-
-ROS package dependencies include:
-
-```text
-rclcpp
-rclpy
-sensor_msgs
-vision_msgs
-geometry_msgs
-nav_msgs
-ackermann_msgs
-visualization_msgs
-cv_bridge
-image_transport
-tf2
-tf2_ros
-tf2_geometry_msgs
-message_filters
-zed_wrapper
-rviz2
-orbslam3
-```
-
-Install normal ROS dependencies with your usual workflow, for example:
+Install normal ROS dependencies, then provide system-level CUDA, TensorRT, the ZED ROS 2 wrapper, and optional ORB-SLAM3:
 
 ```bash
+source /opt/ros/humble/setup.bash
 rosdep install --from-paths . --ignore-src -r -y
 ```
 
-TensorRT, CUDA, and the ORB-SLAM3 installation are system-level dependencies and are not managed by this repo.
-
-## TensorRT Model
-
-The TensorRT engine is not committed to the repository. Put it here:
+Place the TensorRT engine at:
 
 ```text
 cone_nav/models/cone_yolo.engine
 ```
 
-The detector currently expects a YOLO-style output shaped like:
-
-```text
-[num_detections, 6]
-```
-
-or:
-
-```text
-[1, num_detections, 6]
-```
-
-Each row is:
-
-```text
-x, y, w, h, confidence, class
-```
-
-Class IDs:
-
-```text
-0 = blue cone
-1 = yellow cone
-2 = orange / big cone
-```
-
-You can override the engine path at launch:
-
-```bash
-ros2 launch cone_nav real.launch.py engine_path:=/absolute/path/to/cone_yolo.engine
-```
+It must expose FP32 input/output and return `[N,6]` or `[1,N,6]` rows containing `x, y, width, height, confidence, class`. Classes are `0=blue`, `1=yellow`, and `2=orange/big cone`. TensorRT engines are GPU- and TensorRT-version-specific; build the production engine on the target platform.
 
 ## Build
-
-From the repository root:
 
 ```bash
 colcon build --packages-select cone_nav --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
 source install/setup.bash
 ```
 
-If TensorRT is not found, confirm that `NvInfer.h`, `libnvinfer`, `libnvinfer_plugin`, and CUDA are installed and visible to CMake.
-
-## Run On Vehicle
-
-Use the real launch file:
+## Run on the vehicle
 
 ```bash
-source install/setup.bash
 ros2 launch cone_nav real.launch.py
 ```
 
-This launches:
-
-- ZED ROS 2 wrapper for `zed2i`
-- static `base_link -> zed2i_left_camera_frame` transform
-- ORB-SLAM3 stereo-inertial node by default
-- all four `cone_nav` nodes
-- RViz with cone/path visualization
-
-If needed, disable ORB-SLAM3:
+This starts the ZED wrapper, cone pipeline, obstacle avoidance, safety supervisor, RViz, and ORB-SLAM3. Disable ORB-SLAM when it is not installed or calibrated:
 
 ```bash
 ros2 launch cone_nav real.launch.py enable_orbslam:=false
 ```
 
-ZED wrapper topic names vary across releases. The repository defaults preserve
-the original `image_rect_color` contract, but all real sensor topics are launch
-arguments. For a wrapper using the newer rectified color naming, launch with:
+The supplied ORB-SLAM YAML is only a starting point. Replace its intrinsics, stereo baseline, IMU noise values, and body-camera transform before trusting its output. The reactive planner itself does not require or consume ORB-SLAM odometry.
+
+ZED wrapper topic names vary by release. Defaults use the repository's original names, while launch arguments support newer naming:
 
 ```bash
 ros2 launch cone_nav real.launch.py \
@@ -297,102 +103,71 @@ ros2 launch cone_nav real.launch.py \
   camera_info_topic:=/zed2i/zed_node/left/color/rect/camera_info
 ```
 
-Confirm the exact names with `ros2 topic list` for the installed wrapper. The
-depth argument continues to default to
-`/zed2i/zed_node/depth/depth_registered`.
+Confirm the installed wrapper's topics with `ros2 topic list`. Registered depth defaults to `/zed2i/zed_node/depth/depth_registered`.
 
-If your ORB vocabulary file lives elsewhere:
+Useful modes:
 
 ```bash
-ros2 launch cone_nav real.launch.py \
-  orbslam_vocabulary_file:=/absolute/path/to/ORBvoc.txt
+# Compute avoidance but publish the nominal path; drive safety remains active.
+ros2 launch cone_nav real.launch.py avoidance_shadow_mode:=true
+
+# Controlled regression bypass of avoidance and grid command checks.
+ros2 launch cone_nav real.launch.py avoidance_enabled:=false
 ```
 
-If you have a tuned ORB-SLAM3 camera/IMU settings file:
+## Run in Isaac Sim
+
+The Isaac integration provides a Leatherback Ackermann vehicle, ZED 2i-like 0.12 m stereo pair, RGB, camera info, registered depth, `/clock`, cone corridor, collision obstacles, and native `/drive` control.
+
+### 1. Start Isaac Sim
+
+On an Ubuntu RTX host or Brev VM:
 
 ```bash
-ros2 launch cone_nav real.launch.py \
-  orbslam_settings_file:=/absolute/path/to/your_zed2i_stereo_inertial.yaml
-```
-
-## Run In NVIDIA Isaac Sim
-
-The repository contains a dedicated Isaac Sim 6.0.1 integration. It is separate
-from the legacy `f1tenth` and `fsae` launch paths so `/drive` remains an
-`ackermann_msgs/AckermannDriveStamped` topic end to end.
-
-Included files:
-
-- `isaac_sim/autonomousgr_scene.py`: creates a Leatherback Ackermann vehicle,
-  starter cone corridor, selectable collision-obstacle scenarios, a ZED 2i-like
-  0.12 m stereo pair, registered-left depth, `/clock`, camera-info publishers,
-  and a `/drive` subscriber/controller graph.
-- `isaac_sim/run_brev.sh`: launches the pinned Isaac Sim 6.0.1 container on a
-  Linux NVIDIA GPU host and optionally enables WebRTC.
-- `isaac_sim/check_topics.sh`: checks the required ROS topic and TF contract.
-- `cone_nav/launch/isaac.launch.py`: launches only the autonomy stack, TF, and
-  optional RViz/ORB-SLAM; it does not start a conflicting simulator bridge.
-- `cone_nav/config/isaac_params.yaml`: low-speed, simulation-time configuration.
-- `cone_nav/config/viz_isaac.rviz`: RViz view using the simulated camera topics.
-
-### Brev / cloud setup
-
-Create a Brev VM-mode instance with one L40S GPU. Expose WebRTC ports `49100`
-and `47998` only to your current public IP. Clone this repository on the VM.
-
-Start Isaac Sim from the repository root:
-
-```bash
-export PUBLIC_IP=<brev-instance-public-ip>
 export ROS_DOMAIN_ID=0
+export PUBLIC_IP=<host-public-ip>  # Only required for livestreaming.
 ENABLE_LIVESTREAM=1 ./isaac_sim/run_brev.sh
 ```
 
-For a non-interactive/headless validation run:
+For headless operation:
 
 ```bash
-export ROS_DOMAIN_ID=0
-ENABLE_LIVESTREAM=0 ./isaac_sim/run_brev.sh
+ENABLE_LIVESTREAM=0 ./isaac_sim/run_brev.sh --obstacle-scenario center
 ```
 
-Choose a collision scenario with `--obstacle-scenario`. Available values are
-`clear`, `center`, `right`, `narrow`, and `blocked`:
+Available scenarios are `clear`, `center`, `right`, `narrow`, and `blocked`.
 
-```bash
-ENABLE_LIVESTREAM=0 ./isaac_sim/run_brev.sh --obstacle-scenario blocked
-```
+### 2. Start the autonomy stack disarmed
 
-The launcher uses `nvcr.io/nvidia/isaac-sim:6.0.1`, host networking, Isaac
-Sim's internal ROS 2 Humble libraries, and the host `ROS_DOMAIN_ID`. Override the
-image with `ISAAC_IMAGE` only when deliberately testing another release.
-
-### Build and start the ROS stack
-
-In another terminal on the same GPU VM, install/source ROS 2 Humble and build:
+In another terminal on the same host:
 
 ```bash
 source /opt/ros/humble/setup.bash
-rosdep install --from-paths . --ignore-src -r -y
-colcon build --packages-select cone_nav --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
 source install/setup.bash
-```
-
-Place a TensorRT engine built for the VM's GPU and TensorRT version at
-`cone_nav/models/cone_yolo.engine`, or pass an absolute path. TensorRT engines
-are not portable between arbitrary GPU/TensorRT combinations.
-
-Start the autonomy stack **disarmed**:
-
-```bash
 ros2 launch cone_nav isaac.launch.py \
   enable_rviz:=false \
   engine_path:=/absolute/path/to/cone_yolo.engine
 ```
 
-Use `enable_rviz:=true` only in a terminal with a working display. Isaac Sim and
-all navigation nodes use `/clock` and `use_sim_time:=true`.
+Isaac and all autonomy nodes must share `ROS_DOMAIN_ID`, Fast DDS, and simulation time.
 
-Verify the bridge before allowing motion:
+### 3. Select the depth source
+
+Ground-truth renderer depth is the deterministic default for functional and collision tests:
+
+```bash
+ros2 launch cone_nav isaac.launch.py depth_mode:=ground_truth
+```
+
+Stereo mode runs SGBM on the synchronized left/right images and publishes registered `32FC1` depth:
+
+```bash
+ros2 launch cone_nav isaac.launch.py depth_mode:=stereo
+```
+
+Use ground truth to validate navigation and stereo mode to expose calibration, texture, correspondence, and dropout problems. The vehicle uses the ZED SDK's stereo-derived registered depth.
+
+### 4. Verify, then arm
 
 ```bash
 ./isaac_sim/check_topics.sh
@@ -403,285 +178,95 @@ ros2 topic info -v /drive_candidate
 ros2 topic info -v /drive
 ```
 
-Required navigation inputs are:
-
-```text
-/sim/camera/image_raw             sensor_msgs/Image (RGB)
-/sim/camera/right/image_raw       sensor_msgs/Image (RGB)
-/sim/camera/depth                 sensor_msgs/Image (32FC1 metres)
-/sim/camera/camera_info           sensor_msgs/CameraInfo
-/sim/camera/right/camera_info     sensor_msgs/CameraInfo
-/clock                            rosgraph_msgs/Clock
-```
-
-Only after image, depth, intrinsics, TF, detections, and stop behavior have been
-checked should drive output be armed:
+Only after RGB, depth, camera intrinsics, TF, detections, obstacle grid, empty-path stopping, and single `/drive` ownership are confirmed:
 
 ```bash
 ros2 launch cone_nav isaac.launch.py \
-  enable_rviz:=false \
   drive_enabled:=true \
+  enable_rviz:=false \
   engine_path:=/absolute/path/to/cone_yolo.engine
 ```
 
-The Isaac defaults limit target speed to `0.5 m/s` and maximum speed to
-`1.0 m/s`. The launch publishes the correct ROS optical transform from
-`base_link` to `zed2i_left_camera_optical_frame`.
+Isaac defaults to a `0.5 m/s` target and `1.0 m/s` maximum. ORB-SLAM3 is disabled because the starter scene does not publish a calibrated `/sim/imu`.
 
-### Stereo and ORB-SLAM scope
+## Safety and tuning
 
-Isaac supports two selectable depth modes. The default renderer depth is a
-deterministic oracle for functional tests:
+The safety path is intentionally separate from planning:
 
-```bash
-ros2 launch cone_nav isaac.launch.py depth_mode:=ground_truth
+- Invalid or out-of-range depth is discarded; ground and the vehicle hood are filtered.
+- Obstacles are inflated before candidate-path collision checks.
+- Candidate paths must remain inside the cone corridor.
+- No feasible path produces an empty `/path`, which stops pure pursuit.
+- Stale paths, grids, depth, or `/drive_candidate` messages produce zero speed.
+- `drive_safety_node` is the only final `/drive` publisher.
+- Speed is limited using `v * latency + v^2 / (2 * deceleration) + margin`.
+- Isaac starts disarmed.
+
+Primary tuning lives in [`params.yaml`](cone_nav/config/params.yaml) and [`isaac_params.yaml`](cone_nav/config/isaac_params.yaml):
+
+```yaml
+track_half_width: 0.75
+lookahead_distance: 1.5
+speed_target: 1.5
+wheelbase: 0.32
+obstacle_inflation_radius: 0.22
+avoidance_max_lateral_offset: 0.55
+safety_grid_timeout_sec: 0.20
+safety_braking_deceleration: 2.0
+safety_stop_margin: 0.30
 ```
 
-The stereo qualification mode runs OpenCV SGBM over the synchronized rectified
-left/right images, derives the baseline from the right `CameraInfo.P` matrix
-(falling back to `0.12 m`), and publishes registered `32FC1` depth:
+Measure real braking performance before increasing vehicle speed. The defaults are starting values, not a validated physical safety case.
+
+## Legacy simulators
 
 ```bash
-ros2 launch cone_nav isaac.launch.py depth_mode:=stereo
+ros2 launch cone_nav sim.launch.py sim_type:=f1tenth
+ros2 launch cone_nav sim.launch.py sim_type:=fsae
 ```
 
-Use ground-truth mode for repeatable collision tests and stereo mode to expose
-calibration, texture, correspondence, and dropout problems. On the vehicle,
-the ZED SDK's `/depth/depth_registered` output is already stereo-derived and is
-the production source.
-
-ORB-SLAM3 remains disabled by default. The starter scene does not publish a
-calibrated `/sim/imu`; do not set `enable_orbslam:=true` until an Isaac IMU
-publisher and a matching stereo-inertial calibration are added and validated.
-This limitation does not affect the detector, depth localizer, centerline
-planner, or Ackermann controller.
-
-### Isaac contract tests
-
-Run source-level tests on any development machine:
+Legacy simulation bypasses obstacle avoidance by default because these bridges do not guarantee registered stereo depth. Enable it only after verifying `/sim/camera/image_raw`, right image, depth, camera info, timestamps, frames, and TF:
 
 ```bash
-python3 -m unittest cone_nav/test/test_isaac_contract.py \
-  cone_nav/test/test_avoidance_algorithms.py
+ros2 launch cone_nav sim.launch.py sim_type:=f1tenth avoidance_enabled:=true
+```
+
+The FSAE path uses `ackermann_to_twist_node` for a typed `/drive` to `/cmd_vel` conversion.
+
+## Validation
+
+Source-level tests available on any machine:
+
+```bash
+python3 -m unittest discover -s cone_nav/test -p 'test_*.py' -v
 bash -n isaac_sim/run_brev.sh isaac_sim/check_topics.sh
 ```
 
-On the RTX host, also run a bounded Isaac smoke test:
+Bounded Isaac smoke test on the RTX host:
 
 ```bash
 ENABLE_LIVESTREAM=0 ./isaac_sim/run_brev.sh \
   --test-steps 120 --obstacle-scenario center
 ```
 
-Full compatibility is established only after this runtime smoke test and the
-ROS topic checks pass on the target RTX host; macOS cannot execute that portion.
+Full compatibility requires a successful target `colcon` build, Isaac runtime test, ROS topic/type/rate checks, and disarmed stop-behavior validation. macOS cannot perform the ROS/Isaac runtime portion.
 
-## Legacy Simulation Bridges
+## Training utilities
 
-Use:
-
-```bash
-source install/setup.bash
-ros2 launch cone_nav sim.launch.py sim_type:=f1tenth
-```
-
-or:
+The repository retains lightweight dataset and model tools:
 
 ```bash
-ros2 launch cone_nav sim.launch.py sim_type:=fsae
+python3 "Python Detection Code/ConvertToYOLO.py"   # FSOCO -> three-class YOLO data
+python3 "Python Detection Code/ConeDetection.py"  # train YOLO26
+python3 "Python Detection Code/WebcamDetection.py" # quick camera/model check
 ```
 
-Simulation defaults:
+Training outputs and datasets are intentionally ignored by Git. Only the TensorRT runtime contract and class mapping are required by `cone_nav`.
 
-- ORB-SLAM3 is disabled by default in sim.
-- The planner/controller/detector pipeline still runs.
-- Obstacle avoidance is bypassed because the legacy bridges do not guarantee
-  registered stereo depth. Enable it only after the `/sim/camera/*` contract is
-  verified.
-- The FSAE path uses `ackermann_to_twist_node` to convert the final safe
-  Ackermann command to a correctly typed `/cmd_vel`; it is no longer a topic-only
-  remap between incompatible message types.
+## Known limitations
 
-To enable ORB-SLAM3 in sim:
-
-```bash
-ros2 launch cone_nav sim.launch.py sim_type:=f1tenth enable_orbslam:=true
-```
-
-To enable depth avoidance on a compatible legacy bridge:
-
-```bash
-ros2 launch cone_nav sim.launch.py sim_type:=f1tenth avoidance_enabled:=true
-```
-
-Simulation topics configured in [params.yaml](/Users/adi/Desktop/PycharmProjects/AutonomousGR/cone_nav/config/params.yaml):
-
-```yaml
-sim_image_topic: "/sim/camera/image_raw"
-sim_right_image_topic: "/sim/camera/right/image_raw"
-sim_depth_topic: "/sim/camera/depth"
-sim_camera_info_topic: "/sim/camera/camera_info"
-sim_imu_topic: "/sim/imu"
-```
-
-Adjust those names to match the simulator bridge you are using.
-
-## RViz
-
-RViz config:
-
-- [viz.rviz](/Users/adi/Desktop/PycharmProjects/AutonomousGR/cone_nav/config/viz.rviz)
-
-Fixed frame:
-
-```text
-base_link
-```
-
-Displays include:
-
-- left camera image
-- TF tree
-- cone markers
-- nominal and safe path lines
-- nominal path markers
-- inflated obstacle occupancy grid
-- optional filtered obstacle point cloud
-
-## Training and Dataset Utilities
-
-The Python tools in [Python Detection Code](/Users/adi/Desktop/PycharmProjects/AutonomousGR/Python%20Detection%20Code) are now repo-local rather than pointing at the old `Autonomous` workspace.
-
-Files:
-
-```text
-Python Detection Code/ConvertToYOLO.py
-Python Detection Code/ConeDetection.py
-Python Detection Code/WebcamDetection.py
-fsoco.yaml
-```
-
-### Dataset Conversion
-
-Convert raw FSOCO annotations into YOLO format:
-
-```bash
-python3 "Python Detection Code/ConvertToYOLO.py"
-```
-
-Default raw dataset location:
-
-```text
-~/Downloads/fsoco_bounding_boxes_train
-```
-
-Override the raw dataset path for one run:
-
-```bash
-FSOCO_DIR=/absolute/path/to/fsoco python3 "Python Detection Code/ConvertToYOLO.py"
-```
-
-This writes:
-
-```text
-data/yolo_format/train/images
-data/yolo_format/train/labels
-data/yolo_format/val/images
-data/yolo_format/val/labels
-fsoco.yaml
-```
-
-The dataset is collapsed to the same 3 classes used by the ROS runtime:
-
-```text
-0 = blue_cone
-1 = yellow_cone
-2 = orange_cone
-```
-
-### Training
-
-Train with YOLO26:
-
-```bash
-python3 "Python Detection Code/ConeDetection.py"
-```
-
-Current training defaults:
-
-- base checkpoint: `yolo26n.pt`
-- output run name: `fsoco_yolo26n`
-- output directory: `models/fsoco_yolo26n`
-
-Expected trained weights:
-
-```text
-models/fsoco_yolo26n/weights/best.pt
-models/fsoco_yolo26n/weights/last.pt
-```
-
-If an existing checkpoint is present in that run directory, the training script resumes from it.
-
-### Webcam Test
-
-Quick live sanity check with a webcam:
-
-```bash
-python3 "Python Detection Code/WebcamDetection.py"
-```
-
-You can override the camera index or model path:
-
-```bash
-python3 "Python Detection Code/WebcamDetection.py" --camera 1
-python3 "Python Detection Code/WebcamDetection.py" --model "/absolute/path/to/best.pt"
-```
-
-Press `q` to quit.
-
-## Safety Behavior
-
-The runtime code handles the main failure cases:
-
-- invalid depth values are skipped
-- detections outside the configured depth range are ignored
-- duplicate cone detections are merged
-- if the TensorRT engine fails to load, the detector logs a fatal error and exits
-- if the depth topic stops publishing, the localizer warns every 5 seconds
-- if a path has fewer than two waypoints, pure pursuit publishes zero speed
-- if no new path arrives for 0.5 seconds, pure pursuit publishes zero speed
-- a last valid path is held for at most 0.25 seconds; stale perception then
-  publishes an empty path instead of refreshing old commands indefinitely
-- depth obstacles are inflated by the vehicle clearance radius before planning
-- a stale obstacle grid or stale `/drive_candidate` produces an immediate stop
-- a blocked cone corridor publishes an empty `/path`
-- `drive_safety_node` is the only final `/drive` publisher and limits speed with
-  `v * latency + v^2 / (2 * deceleration) + margin`
-- Isaac drive output is disarmed by default and must be explicitly enabled
-- steering is clamped to the configured physical limit
-
-## Isaac Sim Integration Changes
-
-The Isaac integration introduced the following repository changes:
-
-- Added a version-pinned Isaac Sim/Brev launch workflow and generated starter scene.
-- Added native ROS 2 camera, stereo camera-info, clock, and Ackermann OmniGraphs.
-- Added an Isaac-only ROS launch so `/drive` is never remapped to `/cmd_vel`.
-- Corrected localization to use a ROS optical camera frame and added the matching TF.
-- Enabled simulation time consistently across navigation, TF, ORB-SLAM, and RViz.
-- Added a default-disarmed controller and configurable command timeout.
-- Fixed stale-path behavior so losing cones results in a stop command.
-- Added x86_64 TensorRT discovery and TensorRT 8/10 detector API compatibility.
-- Added Isaac-specific RViz configuration and source-level contract tests.
-- Added registered-depth obstacle extraction, local path avoidance, and a
-  fail-closed Ackermann command supervisor.
-- Added selectable Isaac ground-truth and stereo-SGBM depth modes.
-- Added collision-enabled `clear`, `center`, `right`, `narrow`, and `blocked`
-  Isaac scenarios and a right optical-frame baseline contract.
-
-## Notes
-
-- The runtime package uses only standard ROS 2 message types.
-- No custom messages are defined.
-- TensorRT engines should generally be built on the target Jetson because engines are tied to GPU architecture, TensorRT version, CUDA version, and JetPack version.
-- The planning path is still reactive and camera-driven; ORB-SLAM3 is integrated as a visual-inertial odometry / SLAM source, but the current planner itself is not yet consuming a global map or odom frame for long-horizon planning.
+- The planner is reactive and camera-relative; it does not perform global-map planning.
+- ORB-SLAM3 is optional and requires real stereo/IMU calibration.
+- Isaac ground-truth depth validates navigation but not stereo correspondence quality; use `depth_mode:=stereo` for that.
+- A TensorRT engine must match the target GPU, CUDA, and TensorRT versions.
+- The stack uses standard ROS 2 messages and defines no custom interfaces.
