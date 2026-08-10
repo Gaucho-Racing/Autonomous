@@ -22,6 +22,8 @@ public:
     declare_parameter("wheelbase", 0.32);
     declare_parameter("steering_gain", 1.0);
     declare_parameter("max_steering_angle", 0.4);
+    declare_parameter("drive_enabled", true);
+    declare_parameter("path_timeout_sec", 0.5);
 
     lookahead_distance_ = get_parameter("lookahead_distance").as_double();
     lookahead_min_ = get_parameter("lookahead_min").as_double();
@@ -31,6 +33,8 @@ public:
     wheelbase_ = get_parameter("wheelbase").as_double();
     steering_gain_ = get_parameter("steering_gain").as_double();
     max_steering_angle_ = get_parameter("max_steering_angle").as_double();
+    drive_enabled_ = get_parameter("drive_enabled").as_bool();
+    path_timeout_sec_ = get_parameter("path_timeout_sec").as_double();
 
     path_sub_ = create_subscription<nav_msgs::msg::Path>(
       "/path", 10, std::bind(&PurePursuitNode::pathCallback, this, std::placeholders::_1));
@@ -39,13 +43,20 @@ public:
     last_path_time_ = now();
     safety_timer_ = create_wall_timer(100ms, std::bind(&PurePursuitNode::safetyTimer, this));
 
-    RCLCPP_INFO(get_logger(), "pure_pursuit_node publishing /drive");
+    RCLCPP_INFO(
+      get_logger(), "pure_pursuit_node publishing /drive (%s)",
+      drive_enabled_ ? "armed" : "disarmed");
   }
 
 private:
   void pathCallback(const nav_msgs::msg::Path::SharedPtr msg)
   {
     last_path_time_ = now();
+
+    if (!drive_enabled_) {
+      publishStop();
+      return;
+    }
 
     if (msg->poses.size() < 2) {
       publishStop();
@@ -115,7 +126,7 @@ private:
 
   void safetyTimer()
   {
-    if ((now() - last_path_time_).seconds() > 0.5) {
+    if (!drive_enabled_ || (now() - last_path_time_).seconds() > path_timeout_sec_) {
       publishStop();
     }
   }
@@ -144,6 +155,8 @@ private:
   double wheelbase_{0.32};
   double steering_gain_{1.0};
   double max_steering_angle_{0.4};
+  bool drive_enabled_{true};
+  double path_timeout_sec_{0.5};
   double current_speed_command_{0.0};
 };
 

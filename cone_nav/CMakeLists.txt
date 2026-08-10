@@ -31,18 +31,21 @@ find_path(NVINFER_INCLUDE_DIR NvInfer.h
   HINTS
     /usr/include
     /usr/include/aarch64-linux-gnu
+    /usr/include/x86_64-linux-gnu
     /usr/local/cuda/include
 )
 find_library(NVINFER_LIBRARY nvinfer
   HINTS
     /usr/lib
     /usr/lib/aarch64-linux-gnu
+    /usr/lib/x86_64-linux-gnu
     /usr/local/cuda/lib64
 )
 find_library(NVINFER_PLUGIN_LIBRARY nvinfer_plugin
   HINTS
     /usr/lib
     /usr/lib/aarch64-linux-gnu
+    /usr/lib/x86_64-linux-gnu
     /usr/local/cuda/lib64
 )
 
@@ -114,5 +117,12 @@ install(DIRECTORY
   urdf
   DESTINATION share/${PROJECT_NAME}
 )
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_pytest REQUIRED)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+  ament_add_pytest_test(isaac_contract test/test_isaac_contract.py)
+endif()
 
 ament_package()

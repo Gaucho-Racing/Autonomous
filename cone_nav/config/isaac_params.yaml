@@ -1,6 +1,7 @@
 /**:
   ros__parameters:
-    use_sim: false
+    use_sim: true
+    use_sim_time: true
     camera_frame: "zed2i_left_camera_optical_frame"
     base_frame: "base_link"
 
@@ -15,15 +16,15 @@
     min_detection_depth: 0.3
     cone_cluster_radius: 0.4
 
-    lookahead_distance: 1.5
-    lookahead_min: 0.8
-    lookahead_max: 3.0
-    speed_target: 1.5
-    speed_max: 3.0
+    lookahead_distance: 1.0
+    lookahead_min: 0.6
+    lookahead_max: 1.5
+    speed_target: 0.5
+    speed_max: 1.0
     wheelbase: 0.32
     steering_gain: 1.0
     max_steering_angle: 0.4
-    drive_enabled: true
+    drive_enabled: false
     path_timeout_sec: 0.5
 
     path_smoothing_window: 5
@@ -35,13 +36,8 @@
     delaunay_max_edge_length: 6.0
     path_min_forward_x: -0.2
 
-    real_image_topic: "/zed2i/zed_node/left/image_rect_color"
     sim_image_topic: "/sim/camera/image_raw"
-    real_depth_topic: "/zed2i/zed_node/depth/depth_registered"
-    sim_depth_topic: "/sim/camera/depth"
-    real_camera_info_topic: "/zed2i/zed_node/left/camera_info"
-    sim_camera_info_topic: "/sim/camera/camera_info"
-    real_right_image_topic: "/zed2i/zed_node/right/image_rect_color"
     sim_right_image_topic: "/sim/camera/right/image_raw"
-    real_imu_topic: "/zed2i/zed_node/imu/data"
+    sim_depth_topic: "/sim/camera/depth"
+    sim_camera_info_topic: "/sim/camera/camera_info"
     sim_imu_topic: "/sim/imu"

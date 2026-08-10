@@ -26,3 +26,7 @@ models/
 # Logs
 runs/
 logs/
+
+# Isaac Sim generated stages and local runtime data
+isaac_sim/generated/
+isaac_sim/cache/

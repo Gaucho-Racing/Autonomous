@@ -15,6 +15,7 @@ The repo also includes Python utilities for dataset conversion, model training, 
 |   +-- launch/               # Real and sim launch files
 |   +-- models/               # TensorRT engine location
 |   +-- urdf/                 # Lightweight sim robot description
++-- isaac_sim/                # Isaac Sim 6.0.1 scene and Brev launcher
 +-- models/                   # Local training outputs (.pt, .onnx), ignored by git
 +-- data/                     # Local YOLO-format dataset, ignored by git
 +-- Python Detection Code/    # Training, conversion, webcam tools
@@ -144,6 +145,14 @@ Target platform:
 - ZED 2i with ZED ROS 2 wrapper
 - ORB-SLAM3 ROS 2 wrapper for stereo-inertial mode
 
+Isaac Sim target:
+
+- NVIDIA Isaac Sim 6.0.1
+- Ubuntu 22.04 with ROS 2 Humble
+- NVIDIA RTX GPU; the supplied Brev launcher targets an L40S-class instance
+- Fast DDS with the same `ROS_DOMAIN_ID` in Isaac Sim and the ROS workspace
+- TensorRT 8 or 10; the detector contains compatibility paths for both APIs
+
 ROS package dependencies include:
 
 ```text
@@ -262,7 +271,139 @@ ros2 launch cone_nav real.launch.py \
   orbslam_settings_file:=/absolute/path/to/your_zed2i_stereo_inertial.yaml
 ```
 
-## Run In Simulation
+## Run In NVIDIA Isaac Sim
+
+The repository contains a dedicated Isaac Sim 6.0.1 integration. It is separate
+from the legacy `f1tenth` and `fsae` launch paths so `/drive` remains an
+`ackermann_msgs/AckermannDriveStamped` topic end to end.
+
+Included files:
+
+- `isaac_sim/autonomousgr_scene.py`: creates a Leatherback Ackermann vehicle,
+  starter cone corridor, ZED 2i-like stereo pair, registered-left depth, `/clock`,
+  camera-info publishers, and a `/drive` subscriber/controller graph.
+- `isaac_sim/run_brev.sh`: launches the pinned Isaac Sim 6.0.1 container on a
+  Linux NVIDIA GPU host and optionally enables WebRTC.
+- `isaac_sim/check_topics.sh`: checks the required ROS topic and TF contract.
+- `cone_nav/launch/isaac.launch.py`: launches only the autonomy stack, TF, and
+  optional RViz/ORB-SLAM; it does not start a conflicting simulator bridge.
+- `cone_nav/config/isaac_params.yaml`: low-speed, simulation-time configuration.
+- `cone_nav/config/viz_isaac.rviz`: RViz view using the simulated camera topics.
+
+### Brev / cloud setup
+
+Create a Brev VM-mode instance with one L40S GPU. Expose WebRTC ports `49100`
+and `47998` only to your current public IP. Clone this repository on the VM.
+
+Start Isaac Sim from the repository root:
+
+```bash
+export PUBLIC_IP=<brev-instance-public-ip>
+export ROS_DOMAIN_ID=0
+ENABLE_LIVESTREAM=1 ./isaac_sim/run_brev.sh
+```
+
+For a non-interactive/headless validation run:
+
+```bash
+export ROS_DOMAIN_ID=0
+ENABLE_LIVESTREAM=0 ./isaac_sim/run_brev.sh
+```
+
+The launcher uses `nvcr.io/nvidia/isaac-sim:6.0.1`, host networking, Isaac
+Sim's internal ROS 2 Humble libraries, and the host `ROS_DOMAIN_ID`. Override the
+image with `ISAAC_IMAGE` only when deliberately testing another release.
+
+### Build and start the ROS stack
+
+In another terminal on the same GPU VM, install/source ROS 2 Humble and build:
+
+```bash
+source /opt/ros/humble/setup.bash
+rosdep install --from-paths . --ignore-src -r -y
+colcon build --packages-select cone_nav --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
+source install/setup.bash
+```
+
+Place a TensorRT engine built for the VM's GPU and TensorRT version at
+`cone_nav/models/cone_yolo.engine`, or pass an absolute path. TensorRT engines
+are not portable between arbitrary GPU/TensorRT combinations.
+
+Start the autonomy stack **disarmed**:
+
+```bash
+ros2 launch cone_nav isaac.launch.py \
+  enable_rviz:=false \
+  engine_path:=/absolute/path/to/cone_yolo.engine
+```
+
+Use `enable_rviz:=true` only in a terminal with a working display. Isaac Sim and
+all navigation nodes use `/clock` and `use_sim_time:=true`.
+
+Verify the bridge before allowing motion:
+
+```bash
+./isaac_sim/check_topics.sh
+ros2 topic hz /sim/camera/image_raw
+ros2 topic hz /sim/camera/depth
+ros2 topic info -v /drive
+```
+
+Required navigation inputs are:
+
+```text
+/sim/camera/image_raw             sensor_msgs/Image (RGB)
+/sim/camera/right/image_raw       sensor_msgs/Image (RGB)
+/sim/camera/depth                 sensor_msgs/Image (32FC1 metres)
+/sim/camera/camera_info           sensor_msgs/CameraInfo
+/clock                            rosgraph_msgs/Clock
+```
+
+Only after image, depth, intrinsics, TF, detections, and stop behavior have been
+checked should drive output be armed:
+
+```bash
+ros2 launch cone_nav isaac.launch.py \
+  enable_rviz:=false \
+  drive_enabled:=true \
+  engine_path:=/absolute/path/to/cone_yolo.engine
+```
+
+The Isaac defaults limit target speed to `0.5 m/s` and maximum speed to
+`1.0 m/s`. The launch publishes the correct ROS optical transform from
+`base_link` to `zed2i_left_camera_optical_frame`.
+
+### Stereo and ORB-SLAM scope
+
+The functional cone-navigation path uses the left RGB image plus Isaac's
+registered-left `32FC1` depth. The right image is also published so a stereo
+depth or stereo visual-odometry implementation can be evaluated independently.
+
+ORB-SLAM3 remains disabled by default. The starter scene does not publish a
+calibrated `/sim/imu`; do not set `enable_orbslam:=true` until an Isaac IMU
+publisher and a matching stereo-inertial calibration are added and validated.
+This limitation does not affect the detector, depth localizer, centerline
+planner, or Ackermann controller.
+
+### Isaac contract tests
+
+Run source-level tests on any development machine:
+
+```bash
+python3 -m unittest cone_nav/test/test_isaac_contract.py
+bash -n isaac_sim/run_brev.sh isaac_sim/check_topics.sh
+```
+
+On the RTX host, also run a bounded Isaac smoke test:
+
+```bash
+ENABLE_LIVESTREAM=0 ./isaac_sim/run_brev.sh --test-steps 120
+```
+
+Full compatibility is established only after this runtime smoke test and the
+ROS topic checks pass on the target RTX host; macOS cannot execute that portion.
+
+## Legacy Simulation Bridges
 
 Use:
 
@@ -422,7 +563,24 @@ The runtime code handles the main failure cases:
 - if the depth topic stops publishing, the localizer warns every 5 seconds
 - if a path has fewer than two waypoints, pure pursuit publishes zero speed
 - if no new path arrives for 0.5 seconds, pure pursuit publishes zero speed
+- a last valid path is held for at most 0.25 seconds; stale perception then
+  publishes an empty path instead of refreshing old commands indefinitely
+- Isaac drive output is disarmed by default and must be explicitly enabled
 - steering is clamped to the configured physical limit
+
+## Isaac Sim Integration Changes
+
+The Isaac integration introduced the following repository changes:
+
+- Added a version-pinned Isaac Sim/Brev launch workflow and generated starter scene.
+- Added native ROS 2 camera, stereo camera-info, clock, and Ackermann OmniGraphs.
+- Added an Isaac-only ROS launch so `/drive` is never remapped to `/cmd_vel`.
+- Corrected localization to use a ROS optical camera frame and added the matching TF.
+- Enabled simulation time consistently across navigation, TF, ORB-SLAM, and RViz.
+- Added a default-disarmed controller and configurable command timeout.
+- Fixed stale-path behavior so losing cones results in a stop command.
+- Added x86_64 TensorRT discovery and TensorRT 8/10 detector API compatibility.
+- Added Isaac-specific RViz configuration and source-level contract tests.
 
 ## Notes
 

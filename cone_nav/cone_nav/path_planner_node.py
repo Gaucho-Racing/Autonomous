@@ -206,6 +206,7 @@ class PathPlannerNode(Node):
         self.declare_parameter("path_smoothing_window", 5)
         self.declare_parameter("min_cones_to_plan", 2)
         self.declare_parameter("publish_rate_hz", 30.0)
+        self.declare_parameter("path_hold_timeout_sec", 0.25)
         self.declare_parameter("track_half_width", 0.75)
         self.declare_parameter("spline_samples_per_segment", 6)
         self.declare_parameter("delaunay_max_edge_length", 6.0)
@@ -215,6 +216,9 @@ class PathPlannerNode(Node):
         self.path_smoothing_window = int(self.get_parameter("path_smoothing_window").value)
         self.min_cones_to_plan = int(self.get_parameter("min_cones_to_plan").value)
         self.publish_rate_hz = float(self.get_parameter("publish_rate_hz").value)
+        self.path_hold_timeout_sec = float(
+            self.get_parameter("path_hold_timeout_sec").value
+        )
         self.track_half_width = float(self.get_parameter("track_half_width").value)
         self.spline_samples_per_segment = int(
             self.get_parameter("spline_samples_per_segment").value
@@ -241,6 +245,7 @@ class PathPlannerNode(Node):
         self.latest_right: List[Point2] = []
         self.last_path: Optional[Path] = None
         self.last_markers: Optional[MarkerArray] = None
+        self.last_valid_path_time = None
 
         period = 1.0 / max(self.publish_rate_hz, 1.0)
         self.timer = self.create_timer(period, self._publish_timer)
@@ -256,7 +261,14 @@ class PathPlannerNode(Node):
     def _publish_timer(self) -> None:
         waypoints = self._compute_waypoints(self.latest_left, self.latest_right)
         if not waypoints:
-            if self.last_path is not None:
+            now = self.get_clock().now()
+            hold_last_path = (
+                self.last_path is not None
+                and self.last_valid_path_time is not None
+                and (now - self.last_valid_path_time).nanoseconds * 1e-9
+                <= self.path_hold_timeout_sec
+            )
+            if hold_last_path:
                 self.last_path.header.stamp = self.get_clock().now().to_msg()
                 for pose in self.last_path.poses:
                     pose.header.stamp = self.last_path.header.stamp
@@ -264,12 +276,18 @@ class PathPlannerNode(Node):
                 if self.last_markers is not None:
                     self._refresh_marker_stamps(self.last_markers)
                     self.marker_pub.publish(self.last_markers)
+            else:
+                self.last_path = None
+                self.last_markers = None
+                self.path_pub.publish(self._build_path([]))
+                self.marker_pub.publish(self._clear_markers())
             return
 
         path = self._build_path(waypoints)
         markers = self._build_markers(waypoints)
         self.last_path = path
         self.last_markers = markers
+        self.last_valid_path_time = self.get_clock().now()
         self.path_pub.publish(path)
         self.marker_pub.publish(markers)
 
@@ -351,6 +369,14 @@ class PathPlannerNode(Node):
             line.points.append(point)
 
         markers.markers.append(line)
+        return markers
+
+    @staticmethod
+    def _clear_markers() -> MarkerArray:
+        markers = MarkerArray()
+        clear = Marker()
+        clear.action = Marker.DELETEALL
+        markers.markers.append(clear)
         return markers
 
     def _refresh_marker_stamps(self, markers: MarkerArray) -> None:

@@ -13,10 +13,18 @@
   </link>
 
   <link name="zed2i_left_camera_frame"/>
+  <link name="zed2i_left_camera_optical_frame"/>
 
   <joint name="base_to_zed_left" type="fixed">
     <parent link="base_link"/>
     <child link="zed2i_left_camera_frame"/>
     <origin xyz="0.20 0.0 0.20" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ROS optical convention: +Z forward, +X right, +Y down. -->
+  <joint name="zed_left_to_optical" type="fixed">
+    <parent link="zed2i_left_camera_frame"/>
+    <child link="zed2i_left_camera_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.57079632679 0 -1.57079632679"/>
   </joint>
 </robot>

@@ -37,7 +37,7 @@ public:
     tf_listener_(tf_buffer_)
   {
     declare_parameter("use_sim", false);
-    declare_parameter("camera_frame", "zed2i_left_camera_frame");
+    declare_parameter("camera_frame", "zed2i_left_camera_optical_frame");
     declare_parameter("base_frame", "base_link");
     declare_parameter("max_detection_depth", 15.0);
     declare_parameter("min_detection_depth", 0.3);
@@ -323,7 +323,7 @@ private:
   }
 
   bool use_sim_{false};
-  std::string camera_frame_{"zed2i_left_camera_frame"};
+  std::string camera_frame_{"zed2i_left_camera_optical_frame"};
   std::string base_frame_{"base_link"};
   double max_detection_depth_{15.0};
   double min_detection_depth_{0.3};

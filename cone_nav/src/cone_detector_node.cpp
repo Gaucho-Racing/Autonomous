@@ -1,5 +1,6 @@
 #include <NvInfer.h>
 #include <NvInferPlugin.h>
+#include <NvInferVersion.h>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <cuda_runtime_api.h>
 #include <cv_bridge/cv_bridge.h>
@@ -179,13 +180,25 @@ public:
       cudaStreamDestroy(stream_);
     }
     if (context_ != nullptr) {
+#if NV_TENSORRT_MAJOR < 10
       context_->destroy();
+#else
+      delete context_;
+#endif
     }
     if (engine_ != nullptr) {
+#if NV_TENSORRT_MAJOR < 10
       engine_->destroy();
+#else
+      delete engine_;
+#endif
     }
     if (runtime_ != nullptr) {
+#if NV_TENSORRT_MAJOR < 10
       runtime_->destroy();
+#else
+      delete runtime_;
+#endif
     }
   }
 
@@ -275,6 +288,36 @@ private:
 
   bool selectBindings()
   {
+#if NV_TENSORRT_MAJOR >= 10
+    const int nb_tensors = engine_->getNbIOTensors();
+    for (int i = 0; i < nb_tensors; ++i) {
+      const char * name = engine_->getIOTensorName(i);
+      if (name == nullptr) {
+        continue;
+      }
+      const auto mode = engine_->getTensorIOMode(name);
+      if (mode == nvinfer1::TensorIOMode::kINPUT && input_tensor_name_.empty()) {
+        input_tensor_name_ = name;
+      } else if (mode == nvinfer1::TensorIOMode::kOUTPUT && output_tensor_name_.empty()) {
+        output_tensor_name_ = name;
+      }
+    }
+
+    if (input_tensor_name_.empty() || output_tensor_name_.empty()) {
+      RCLCPP_FATAL(get_logger(), "TensorRT engine must expose one input and one output tensor");
+      return false;
+    }
+    if (engine_->getTensorDataType(input_tensor_name_.c_str()) != nvinfer1::DataType::kFLOAT ||
+      engine_->getTensorDataType(output_tensor_name_.c_str()) != nvinfer1::DataType::kFLOAT)
+    {
+      RCLCPP_FATAL(get_logger(), "Only FP32 input/output tensors are supported by this node");
+      return false;
+    }
+
+    input_binding_ = 0;
+    output_binding_ = 1;
+    device_bindings_.assign(2, nullptr);
+#else
     const int nb_bindings = engine_->getNbBindings();
     input_binding_ = -1;
     output_binding_ = -1;
@@ -299,12 +342,17 @@ private:
     }
 
     device_bindings_.assign(static_cast<size_t>(nb_bindings), nullptr);
+#endif
     return true;
   }
 
   bool configureInputShape()
   {
+#if NV_TENSORRT_MAJOR >= 10
+    nvinfer1::Dims dims = engine_->getTensorShape(input_tensor_name_.c_str());
+#else
     nvinfer1::Dims dims = engine_->getBindingDimensions(input_binding_);
+#endif
     if (dims.nbDims < 3) {
       RCLCPP_FATAL(get_logger(), "Expected TensorRT input dims [N,3,H,W] or [3,H,W]");
       return false;
@@ -334,14 +382,22 @@ private:
       dims.d[0] = 1;
     }
 
+#if NV_TENSORRT_MAJOR >= 10
+    if (!context_->setInputShape(input_tensor_name_.c_str(), dims)) {
+#else
     if (!context_->setBindingDimensions(input_binding_, dims)) {
+#endif
       RCLCPP_FATAL(get_logger(), "Failed to set TensorRT input binding dimensions");
       return false;
     }
 
     input_count_ = static_cast<size_t>(3 * input_h_ * input_w_);
 
+#if NV_TENSORRT_MAJOR >= 10
+    nvinfer1::Dims output_dims = context_->getTensorShape(output_tensor_name_.c_str());
+#else
     nvinfer1::Dims output_dims = context_->getBindingDimensions(output_binding_);
+#endif
     output_count_ = volumeOf(output_dims);
     if (output_count_ == 0 || output_count_ % 6 != 0) {
       output_count_ = static_cast<size_t>(std::max(1, output_num_detections_fallback_)) * 6;
@@ -385,8 +441,17 @@ private:
     }
     cv_stream.waitForCompletion();
 
+#if NV_TENSORRT_MAJOR >= 10
+    const bool addresses_set =
+      context_->setTensorAddress(
+      input_tensor_name_.c_str(), device_bindings_[input_binding_]) &&
+      context_->setTensorAddress(
+      output_tensor_name_.c_str(), device_bindings_[output_binding_]);
+    if (!addresses_set || !context_->enqueueV3(stream_)) {
+#else
     if (!context_->enqueueV2(device_bindings_.data(), stream_, nullptr)) {
-      RCLCPP_WARN(get_logger(), "TensorRT enqueueV2 failed");
+#endif
+      RCLCPP_WARN(get_logger(), "TensorRT inference enqueue failed");
       return;
     }
 
@@ -560,6 +625,10 @@ private:
   int output_num_detections_fallback_{25200};
   int input_binding_{-1};
   int output_binding_{-1};
+#if NV_TENSORRT_MAJOR >= 10
+  std::string input_tensor_name_;
+  std::string output_tensor_name_;
+#endif
   size_t input_count_{0};
   size_t output_count_{0};
   size_t output_bytes_{0};
