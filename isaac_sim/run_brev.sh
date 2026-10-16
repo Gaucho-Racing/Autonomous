@@ -29,8 +29,9 @@ if [[ "${ENABLE_LIVESTREAM}" == "1" ]]; then
   fi
   SCENE_ARGS+=(--livestream)
   KIT_ARGS+=(
-    "--/app/livestream/publicEndpointAddress=${PUBLIC_IP}"
-    "--/app/livestream/port=49100"
+    "--/exts/omni.kit.livestream.app/primaryStream/publicIp=${PUBLIC_IP}"
+    "--/exts/omni.kit.livestream.app/primaryStream/signalPort=49100"
+    "--/exts/omni.kit.livestream.app/primaryStream/streamPort=47998"
   )
 fi
 

@@ -77,6 +77,17 @@ class IsaacIntegrationContractTest(unittest.TestCase):
         self.assertIn("path_timeout_sec", controller)
         self.assertIn("drive_enabled", controller)
 
+    def test_ultralytics_tensorrt_contract_is_selected(self):
+        params = (PACKAGE_ROOT / "config" / "isaac_params.yaml").read_text(
+            encoding="utf-8"
+        )
+        detector = (PACKAGE_ROOT / "src" / "cone_detector_node.cpp").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('trt_bbox_format: "xyxy"', params)
+        self.assertIn('bbox_format_ == "xyxy"', detector)
+        self.assertIn("Ultralytics TensorRT metadata header", detector)
+
     def test_obstacle_topics_and_nodes_are_wired(self):
         params = (PACKAGE_ROOT / "config" / "isaac_params.yaml").read_text(
             encoding="utf-8"

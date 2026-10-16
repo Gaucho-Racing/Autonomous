@@ -65,13 +65,35 @@ source /opt/ros/humble/setup.bash
 rosdep install --from-paths . --ignore-src -r -y
 ```
 
-Place the TensorRT engine at:
+The trained YOLO26 checkpoint is included at
+`models/fsoco_yolo26n/weights/best.pt`. Export it on the target NVIDIA GPU:
+
+```bash
+python3 -m venv .venv-export --system-site-packages
+source .venv-export/bin/activate
+python -m pip install --upgrade pip ultralytics onnx onnxslim
+
+yolo export \
+  model=models/fsoco_yolo26n/weights/best.pt \
+  format=engine imgsz=640 batch=1 dynamic=False \
+  quantize=32 nms=False device=0 workspace=4
+
+cp models/fsoco_yolo26n/weights/best.engine \
+  cone_nav/models/cone_yolo.engine
+```
+
+The final engine belongs at:
 
 ```text
 cone_nav/models/cone_yolo.engine
 ```
 
-It must expose FP32 input/output and return `[N,6]` or `[1,N,6]` rows containing `x, y, width, height, confidence, class`. Classes are `0=blue`, `1=yellow`, and `2=orange/big cone`. TensorRT engines are GPU- and TensorRT-version-specific; build the production engine on the target platform.
+The Isaac configuration expects the YOLO26 `nms=False` FP32 output
+`[N,6]` or `[1,N,6]` containing `x1, y1, x2, y2, confidence, class`.
+Legacy `cx, cy, width, height` engines remain selectable with
+`trt_bbox_format:=cxcywh`. Classes are `0=blue`, `1=yellow`, and
+`2=orange/big cone`. TensorRT engines are GPU- and TensorRT-version-specific;
+build the production engine on the target platform.
 
 ## Build
 
@@ -122,6 +144,10 @@ The Isaac integration provides a Leatherback Ackermann vehicle, ZED 2i-like 0.12
 ### 1. Start Isaac Sim
 
 On an Ubuntu RTX host or Brev VM:
+
+Allow inbound TCP `49100` and UDP `47998` from only the workstation that will
+run the WebRTC client. Do not expose the unauthenticated stream to the public
+Internet.
 
 ```bash
 export ROS_DOMAIN_ID=0

@@ -14,6 +14,8 @@
 #include <vision_msgs/msg/detection2_d_array.hpp>
 
 #include <algorithm>
+#include <cstdint>
+#include <cstring>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -133,6 +135,7 @@ public:
     declare_parameter("trt_input_width", 640);
     declare_parameter("trt_input_height", 640);
     declare_parameter("trt_output_num_detections", 25200);
+    declare_parameter("trt_bbox_format", "cxcywh");
 
     use_sim_ = get_parameter("use_sim").as_bool();
     confidence_threshold_ = static_cast<float>(
@@ -141,6 +144,14 @@ public:
     input_w_ = get_parameter("trt_input_width").as_int();
     input_h_ = get_parameter("trt_input_height").as_int();
     output_num_detections_fallback_ = get_parameter("trt_output_num_detections").as_int();
+    bbox_format_ = get_parameter("trt_bbox_format").as_string();
+    if (bbox_format_ != "cxcywh" && bbox_format_ != "xyxy") {
+      RCLCPP_FATAL(
+        get_logger(), "Unsupported trt_bbox_format '%s'; use cxcywh or xyxy",
+        bbox_format_.c_str());
+      rclcpp::shutdown();
+      return;
+    }
 
     const std::string image_topic = use_sim_ ?
       get_parameter("sim_image_topic").as_string() :
@@ -253,9 +264,32 @@ private:
 
     engine_file.seekg(0, std::ios::end);
     const auto size = engine_file.tellg();
+    if (size <= 0) {
+      RCLCPP_FATAL(get_logger(), "TensorRT engine file is empty");
+      return false;
+    }
     engine_file.seekg(0, std::ios::beg);
     std::vector<char> engine_data(static_cast<size_t>(size));
     engine_file.read(engine_data.data(), static_cast<std::streamsize>(size));
+
+    // Ultralytics prepends a signed 32-bit JSON length and JSON metadata to
+    // exported TensorRT plans. Raw trtexec plans have no such prefix.
+    size_t plan_offset = 0;
+    if (engine_data.size() > sizeof(int32_t)) {
+      int32_t metadata_size = 0;
+      std::memcpy(&metadata_size, engine_data.data(), sizeof(metadata_size));
+      const size_t candidate_offset = sizeof(metadata_size) +
+        static_cast<size_t>(std::max(metadata_size, 0));
+      if (
+        metadata_size > 0 && candidate_offset < engine_data.size() &&
+        engine_data[sizeof(metadata_size)] == '{')
+      {
+        plan_offset = candidate_offset;
+        RCLCPP_INFO(
+          get_logger(), "Detected Ultralytics TensorRT metadata header (%d bytes)",
+          metadata_size);
+      }
+    }
 
     initLibNvInferPlugins(&trt_logger_, "");
     runtime_ = nvinfer1::createInferRuntime(trt_logger_);
@@ -263,7 +297,8 @@ private:
       return false;
     }
 
-    engine_ = runtime_->deserializeCudaEngine(engine_data.data(), engine_data.size());
+    engine_ = runtime_->deserializeCudaEngine(
+      engine_data.data() + plan_offset, engine_data.size() - plan_offset);
     if (engine_ == nullptr) {
       return false;
     }
@@ -549,28 +584,48 @@ private:
         continue;
       }
 
-      float cx = row[0];
-      float cy = row[1];
-      float w = row[2];
-      float h = row[3];
-      if (w <= 0.0F || h <= 0.0F) {
-        continue;
-      }
-
-      const bool normalized =
-        std::abs(cx) <= 2.0F && std::abs(cy) <= 2.0F && w <= 2.0F && h <= 2.0F;
-      if (normalized) {
-        cx *= static_cast<float>(original_w);
-        w *= static_cast<float>(original_w);
-        cy *= static_cast<float>(original_h);
-        h *= static_cast<float>(original_h);
+      float cx;
+      float cy;
+      float w;
+      float h;
+      if (bbox_format_ == "xyxy") {
+        float x1 = row[0];
+        float y1 = row[1];
+        float x2 = row[2];
+        float y2 = row[3];
+        const bool normalized =
+          std::abs(x1) <= 2.0F && std::abs(y1) <= 2.0F &&
+          std::abs(x2) <= 2.0F && std::abs(y2) <= 2.0F;
+        const float scale_x = normalized ? static_cast<float>(original_w) :
+          static_cast<float>(original_w) / static_cast<float>(input_w_);
+        const float scale_y = normalized ? static_cast<float>(original_h) :
+          static_cast<float>(original_h) / static_cast<float>(input_h_);
+        x1 *= scale_x;
+        x2 *= scale_x;
+        y1 *= scale_y;
+        y2 *= scale_y;
+        w = x2 - x1;
+        h = y2 - y1;
+        cx = x1 + 0.5F * w;
+        cy = y1 + 0.5F * h;
       } else {
-        const float scale_x = static_cast<float>(original_w) / static_cast<float>(input_w_);
-        const float scale_y = static_cast<float>(original_h) / static_cast<float>(input_h_);
+        cx = row[0];
+        cy = row[1];
+        w = row[2];
+        h = row[3];
+        const bool normalized =
+          std::abs(cx) <= 2.0F && std::abs(cy) <= 2.0F && w <= 2.0F && h <= 2.0F;
+        const float scale_x = normalized ? static_cast<float>(original_w) :
+          static_cast<float>(original_w) / static_cast<float>(input_w_);
+        const float scale_y = normalized ? static_cast<float>(original_h) :
+          static_cast<float>(original_h) / static_cast<float>(input_h_);
         cx *= scale_x;
         w *= scale_x;
         cy *= scale_y;
         h *= scale_y;
+      }
+      if (w <= 0.0F || h <= 0.0F) {
+        continue;
       }
 
       cx = std::clamp(cx, 0.0F, static_cast<float>(std::max(0, original_w - 1)));
@@ -623,6 +678,7 @@ private:
   int input_w_{640};
   int input_h_{640};
   int output_num_detections_fallback_{25200};
+  std::string bbox_format_{"cxcywh"};
   int input_binding_{-1};
   int output_binding_{-1};
 #if NV_TENSORRT_MAJOR >= 10
