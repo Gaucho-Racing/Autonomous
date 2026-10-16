@@ -17,9 +17,11 @@ def parse_args():
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--livestream", action="store_true")
     parser.add_argument("--test-steps", type=int, default=0)
-    parser.add_argument("--resolution-width", type=int, default=1280)
-    parser.add_argument("--resolution-height", type=int, default=720)
-    parser.add_argument("--camera-rate", type=float, default=30.0)
+    # Conservative dual-camera defaults for 10 GB GPUs such as the RTX 3080.
+    # These can be raised from run_brev.sh once GPU memory headroom is verified.
+    parser.add_argument("--resolution-width", type=int, default=960)
+    parser.add_argument("--resolution-height", type=int, default=540)
+    parser.add_argument("--camera-rate", type=float, default=20.0)
     parser.add_argument(
         "--obstacle-scenario",
         choices=("clear", "center", "right", "narrow", "blocked"),

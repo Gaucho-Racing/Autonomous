@@ -161,6 +161,20 @@ For headless operation:
 ENABLE_LIVESTREAM=0 ./isaac_sim/run_brev.sh --obstacle-scenario center
 ```
 
+The launcher defaults to a 10 GB RTX 3080-safe camera profile: two `960x540`
+cameras at `20 Hz`. Override it only after checking GPU memory usage:
+
+```bash
+ISAAC_RESOLUTION_WIDTH=1280 \
+ISAAC_RESOLUTION_HEIGHT=720 \
+ISAAC_CAMERA_RATE=30 \
+ENABLE_LIVESTREAM=0 ./isaac_sim/run_brev.sh
+```
+
+Monitor the GPU in another terminal with `watch -n 1 nvidia-smi`. If Isaac Sim
+approaches the 10 GB VRAM limit, keep the default profile or reduce the camera
+rate to `15`. The detector still uses a `640x640`, batch-1 TensorRT input.
+
 Available scenarios are `clear`, `center`, `right`, `narrow`, and `blocked`.
 
 ### 2. Start the autonomy stack disarmed

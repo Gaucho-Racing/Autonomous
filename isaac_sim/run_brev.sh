@@ -6,6 +6,9 @@ ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-0}"
 PRIVACY_CONSENT="${PRIVACY_CONSENT:-N}"
 ENABLE_LIVESTREAM="${ENABLE_LIVESTREAM:-1}"
 PUBLIC_IP="${PUBLIC_IP:-}"
+ISAAC_RESOLUTION_WIDTH="${ISAAC_RESOLUTION_WIDTH:-960}"
+ISAAC_RESOLUTION_HEIGHT="${ISAAC_RESOLUTION_HEIGHT:-540}"
+ISAAC_CAMERA_RATE="${ISAAC_CAMERA_RATE:-20}"
 EXTRA_SCENE_ARGS=("$@")
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -20,7 +23,13 @@ command -v docker >/dev/null || { echo "docker is required" >&2; exit 1; }
 command -v nvidia-smi >/dev/null || { echo "nvidia-smi is required" >&2; exit 1; }
 nvidia-smi >/dev/null
 
-SCENE_ARGS=(--headless --ros-domain-id "${ROS_DOMAIN_ID}")
+SCENE_ARGS=(
+  --headless
+  --ros-domain-id "${ROS_DOMAIN_ID}"
+  --resolution-width "${ISAAC_RESOLUTION_WIDTH}"
+  --resolution-height "${ISAAC_RESOLUTION_HEIGHT}"
+  --camera-rate "${ISAAC_CAMERA_RATE}"
+)
 KIT_ARGS=()
 if [[ "${ENABLE_LIVESTREAM}" == "1" ]]; then
   if [[ -z "${PUBLIC_IP}" ]]; then
