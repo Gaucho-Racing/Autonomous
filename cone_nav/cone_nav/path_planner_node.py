@@ -251,7 +251,7 @@ class PathPlannerNode(Node):
         self.timer = self.create_timer(period, self._publish_timer)
 
         self.get_logger().info(
-            "path_planner_node using Delaunay centerline with cubic spline smoothing"
+            "path_planner_node using greedy cone pairing with cubic spline smoothing"
         )
 
     def _cones_callback(self, left_msg: PoseArray, right_msg: PoseArray) -> None:
@@ -297,14 +297,13 @@ class PathPlannerNode(Node):
             return []
 
         if left and right:
-            labeled_points: List[LabeledPoint] = [(*point, "left") for point in left] + [
-                (*point, "right") for point in right
-            ]
-            midpoints = _midpoints_from_delaunay(
-                labeled_points, self.delaunay_max_edge_length, self.path_min_forward_x
-            )
-            if len(midpoints) < 2:
-                midpoints = _greedy_midpoints(left, right)
+            # labeled_points: List[LabeledPoint] = [(*point, "left") for point in left] + [
+            #     (*point, "right") for point in right
+            # ]
+            # midpoints = _midpoints_from_delaunay(
+            #     labeled_points, self.delaunay_max_edge_length, self.path_min_forward_x
+            # )
+            midpoints = _greedy_midpoints(left, right)
         elif left:
             midpoints = [(point[0], point[1] - self.track_half_width) for point in left]
         else:
