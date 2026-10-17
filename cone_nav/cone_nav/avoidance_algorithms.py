@@ -14,10 +14,16 @@ def grid_index(
     width: int,
     height: int,
 ) -> Optional[int]:
-    if resolution <= 0.0:
+    if resolution <= 0.0 or not all(
+        math.isfinite(value) for value in (x, y, origin_x, origin_y, resolution)
+    ):
         return None
-    gx = math.floor((x - origin_x) / resolution)
-    gy = math.floor((y - origin_y) / resolution)
+    grid_x = (x - origin_x) / resolution
+    grid_y = (y - origin_y) / resolution
+    if not math.isfinite(grid_x) or not math.isfinite(grid_y):
+        return None
+    gx = math.floor(grid_x)
+    gy = math.floor(grid_y)
     if gx < 0 or gy < 0 or gx >= width or gy >= height:
         return None
     return int(gy * width + gx)

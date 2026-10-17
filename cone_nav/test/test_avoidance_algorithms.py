@@ -22,6 +22,21 @@ class AvoidanceAlgorithmsTest(unittest.TestCase):
         self.assertEqual(grid_index(0.05, -0.95, 0.0, -1.0, 0.1, 20, 20), 0)
         self.assertIsNone(grid_index(-0.01, 0.0, 0.0, -1.0, 0.1, 20, 20))
 
+    def test_grid_index_rejects_nonfinite_inputs(self):
+        for position in range(5):
+            for value in (math.nan, math.inf, -math.inf):
+                args = [0.05, 0.05, 0.0, 0.0, 0.1, 20, 20]
+                args[position] = value
+                with self.subTest(position=position, value=value):
+                    self.assertIsNone(grid_index(*args))
+
+    def test_grid_index_rejects_overflow_and_invalid_resolution(self):
+        self.assertIsNone(grid_index(1e308, 0.0, -1e308, 0.0, 0.1, 20, 20))
+        self.assertIsNone(grid_index(1.0, 0.0, 0.0, 0.0, 1e-320, 20, 20))
+        for resolution in (0.0, -0.1):
+            with self.subTest(resolution=resolution):
+                self.assertIsNone(grid_index(0.0, 0.0, 0.0, 0.0, resolution, 20, 20))
+
     def test_shifted_path_starts_at_vehicle_and_reaches_offset(self):
         shifted = shifted_path([(0.0, 0.0), (1.0, 0.0), (2.0, 0.0)], 0.5, 1.0)
         self.assertAlmostEqual(shifted[0][1], 0.0)
