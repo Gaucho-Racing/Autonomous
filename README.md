@@ -301,6 +301,13 @@ python3 "Python Detection Code/ConeDetection.py"  # train YOLO26
 python3 "Python Detection Code/WebcamDetection.py" # quick camera/model check
 ```
 
+Conversion reads `~/Downloads/fsoco_bounding_boxes_train` by default; set
+`FSOCO_DIR` to use another source. It pairs `.jpg`, `.jpeg`, and `.png` images
+(case-insensitive extensions) with matching annotations, sorts them before the
+seeded train/validation shuffle, and clips boxes to the image before normalization
+and small-box filtering. Running conversion deletes and recreates
+`data/yolo_format`, so preserve any needed output before rerunning it.
+
 Training outputs and datasets are intentionally ignored by Git. Only the TensorRT runtime contract and class mapping are required by `cone_nav`.
 
 ## Known limitations
