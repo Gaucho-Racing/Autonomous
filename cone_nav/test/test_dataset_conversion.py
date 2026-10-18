@@ -1,4 +1,5 @@
 import importlib.util
+import fnmatch
 from pathlib import Path
 from types import ModuleType
 import unittest
@@ -39,6 +40,44 @@ class DatasetConversionTest(unittest.TestCase):
         expected = ["0 0.500000 0.500000 0.600000 0.600000"]
         self.assertEqual(self.labels_for([[20, 20], [80, 80]]), expected)
         self.assertEqual(self.labels_for([[80, 80], [20, 20]]), expected)
+
+    def test_discovery_filters_and_sorts_images(self):
+        root = Path("/dataset")
+        team_a, team_z = root / "a", root / "z"
+        images_a = [team_a / "img" / name for name in (
+            "c.PNG", "b.JPEG", "a.jpg", "backup.jpg.tmp", "folder.png", "unpaired.jpg"
+        )]
+        image_z = team_z / "img" / "z.jpeg"
+        listings = {
+            root: [team_z, team_a],
+            team_a / "img": images_a,
+            team_z / "img": [image_z],
+        }
+        annotations = {
+            team_a / "ann" / "a.jpg.json",
+            team_a / "ann" / "b.json",
+            team_a / "ann" / "c.json",
+            team_a / "ann" / "backup.jpg.json",
+            team_a / "ann" / "folder.json",
+            team_z / "ann" / "z.json",
+        }
+        directories = {root, team_a, team_z, team_a / "img", team_a / "ann",
+                       team_z / "img", team_z / "ann", images_a[4]}
+        with patch.object(CONVERTER, "FSOCO_DIR", root), \
+                patch.object(Path, "iterdir", lambda path: iter(listings[path])), \
+                patch.object(Path, "glob", lambda path, pattern: (
+                    item for item in listings[path] if fnmatch.fnmatchcase(item.name, pattern)
+                )), \
+                patch.object(Path, "is_dir", lambda path: path in directories), \
+                patch.object(Path, "is_file", lambda path: path not in directories), \
+                patch.object(Path, "exists", lambda path: path in directories or path in annotations):
+            samples = CONVERTER.find_samples()
+        self.assertEqual(samples, [
+            (images_a[2], team_a / "ann" / "a.jpg.json"),
+            (images_a[1], team_a / "ann" / "b.json"),
+            (images_a[0], team_a / "ann" / "c.json"),
+            (image_z, team_z / "ann" / "z.json"),
+        ])
 
 
 if __name__ == "__main__":

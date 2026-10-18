@@ -102,7 +102,7 @@ def find_samples():
     """Discover image/annotation pairs in the FSOCO directory."""
     all_samples = []
 
-    for team_dir in FSOCO_DIR.iterdir():
+    for team_dir in sorted(FSOCO_DIR.iterdir()):
         if not team_dir.is_dir():
             continue
 
@@ -116,7 +116,9 @@ def find_samples():
         if not img_dir.exists():
             continue
 
-        for img_path in img_dir.glob("*.[jJpP][pPnN][gG]*"):
+        for img_path in sorted(img_dir.iterdir()):
+            if not img_path.is_file() or img_path.suffix.lower() not in (".jpg", ".jpeg", ".png"):
+                continue
             ann_path = ann_dir / f"{img_path.stem}.json"
             if not ann_path.exists():
                 ann_path = ann_dir / f"{img_path.name}.json"
