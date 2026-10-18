@@ -63,7 +63,12 @@ def path_collides(
 ) -> bool:
     for x, y in points:
         index = grid_index(x, y, origin_x, origin_y, resolution, width, height)
-        if index is None or data[index] < 0 or data[index] >= occupied_threshold:
+        if (
+            index is None
+            or index >= len(data)
+            or data[index] < 0
+            or data[index] >= occupied_threshold
+        ):
             return True
     return False
 

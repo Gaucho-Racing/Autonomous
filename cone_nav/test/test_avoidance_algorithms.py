@@ -56,6 +56,16 @@ class AvoidanceAlgorithmsTest(unittest.TestCase):
         self.assertTrue(inside_cone_corridor([(1.0, 0.0)], left, right, 0.2, 0.2))
         self.assertFalse(inside_cone_corridor([(1.0, 0.7)], left, right, 0.2, 0.2))
 
+    def test_collision_check_rejects_missing_cells(self):
+        self.assertTrue(path_collides([(0.15, 0.15)], [], 0.0, 0.0, 0.1, 2, 2, 50))
+        self.assertTrue(path_collides([(0.15, 0.15)], [0] * 3, 0.0, 0.0, 0.1, 2, 2, 50))
+        self.assertFalse(path_collides([(0.15, 0.15)], [0] * 4, 0.0, 0.0, 0.1, 2, 2, 50))
+
+    def test_collision_check_rejects_invalid_coordinates(self):
+        for x in (math.nan, math.inf, -math.inf):
+            with self.subTest(x=x):
+                self.assertTrue(path_collides([(x, 0.0)], [0], 0.0, 0.0, 0.1, 1, 1, 50))
+
     def test_clearance(self):
         clearance = path_clearance([(0.0, 0.0), (1.0, 0.0)], [(1.0, 1.0)])
         self.assertTrue(math.isclose(clearance, 1.0))
