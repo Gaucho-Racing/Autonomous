@@ -63,16 +63,15 @@ def supervisely_to_yolo(annotation, img_width, img_height):
 
         x1, y1 = exterior[0]
         x2, y2 = exterior[1]
+        x1 = max(0.0, min(img_width, x1))
+        x2 = max(0.0, min(img_width, x2))
+        y1 = max(0.0, min(img_height, y1))
+        y2 = max(0.0, min(img_height, y2))
 
         x_center = ((x1 + x2) / 2.0) / img_width
         y_center = ((y1 + y2) / 2.0) / img_height
         width = abs(x2 - x1) / img_width
         height = abs(y2 - y1) / img_height
-
-        x_center = max(0.0, min(1.0, x_center))
-        y_center = max(0.0, min(1.0, y_center))
-        width = max(0.0, min(1.0, width))
-        height = max(0.0, min(1.0, height))
 
         min_dim_px = min(width, height) * TRAIN_IMGSZ
         if width > 0.0 and height > 0.0 and min_dim_px >= MIN_BOX_SIZE_PX:
