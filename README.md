@@ -310,3 +310,9 @@ Training outputs and datasets are intentionally ignored by Git. Only the TensorR
 - Isaac ground-truth depth validates navigation but not stereo correspondence quality; use `depth_mode:=stereo` for that.
 - A TensorRT engine must match the target GPU, CUDA, and TensorRT versions.
 - The stack uses standard ROS 2 messages and defines no custom interfaces.
+
+The avoidance grid helpers reject nonfinite coordinates, origins, and resolutions,
+nonpositive resolutions, and coordinate conversions that overflow. Collision checks
+reject sampled path points outside the grid, in unknown or occupied cells, or in
+cells missing from the grid data. These checks apply at the sampled path points;
+they do not check the segments between points.
