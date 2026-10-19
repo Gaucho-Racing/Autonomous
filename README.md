@@ -308,6 +308,17 @@ seeded train/validation shuffle, and clips boxes to the image before normalizati
 and small-box filtering. Running conversion deletes and recreates
 `data/yolo_format`, so preserve any needed output before rerunning it.
 
+The webcam utility defaults to camera `0` and selects the first model file in its
+fallback list: YOLO26 `best.pt`, then legacy YOLOv8 `best.pt` and `last.pt`.
+Use `--model` to select a specific file and `--camera` for another camera index:
+
+```bash
+python3 "Python Detection Code/WebcamDetection.py" \
+  --camera 1 --model /absolute/path/to/best.pt --conf 0.25 --imgsz 640
+```
+
+Press `q` in the preview window to quit.
+
 Training outputs and datasets are intentionally ignored by Git. Only the TensorRT runtime contract and class mapping are required by `cone_nav`.
 
 ## Known limitations
