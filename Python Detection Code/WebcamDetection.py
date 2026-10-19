@@ -88,12 +88,12 @@ def main():
 
     model = YOLO(str(model_path))
     cap = cv2.VideoCapture(args.camera)
-    if not cap.isOpened():
-        raise RuntimeError(f"Could not open webcam index {args.camera}")
-
-    print("Press q to quit.")
-
     try:
+        if not cap.isOpened():
+            raise RuntimeError(f"Could not open webcam index {args.camera}")
+
+        print("Press q to quit.")
+
         while True:
             ok, frame = cap.read()
             if not ok:

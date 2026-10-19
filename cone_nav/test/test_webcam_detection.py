@@ -41,6 +41,32 @@ class WebcamDetectionTest(unittest.TestCase):
             with self.assertRaisesRegex(FileNotFoundError, "Pass --model"):
                 WEBCAM.resolve_model_path("")
 
+    def test_camera_cleanup_on_failures(self):
+        for failure in ("open", "read", "predict"):
+            with self.subTest(failure=failure):
+                camera = Mock()
+                camera.isOpened.return_value = failure != "open"
+                camera.read.return_value = (failure != "read", Mock())
+                cv2 = Mock()
+                cv2.VideoCapture.return_value = camera
+                model = Mock()
+                model.predict.side_effect = ValueError("Inference failed")
+                with patch.object(WEBCAM, "cv2", cv2), \
+                        patch.object(WEBCAM, "YOLO", return_value=model), \
+                        patch.object(WEBCAM, "resolve_model_path", return_value=Path("/model.pt")), \
+                        patch("sys.argv", ["WebcamDetection.py"]), \
+                        patch("builtins.print"):
+                    if failure == "open":
+                        with self.assertRaisesRegex(RuntimeError, "Could not open webcam"):
+                            WEBCAM.main()
+                    elif failure == "predict":
+                        with self.assertRaisesRegex(ValueError, "Inference failed"):
+                            WEBCAM.main()
+                    else:
+                        WEBCAM.main()
+                camera.release.assert_called_once_with()
+                cv2.destroyAllWindows.assert_called_once_with()
+
 
 if __name__ == "__main__":
     unittest.main()
