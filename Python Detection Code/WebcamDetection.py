@@ -28,12 +28,12 @@ CLASS_COLORS = {
 def resolve_model_path(cli_model_path):
     if cli_model_path:
         model_path = Path(cli_model_path).expanduser().resolve()
-        if not model_path.exists():
+        if not model_path.is_file():
             raise FileNotFoundError(f"Model not found: {model_path}")
         return model_path
 
     for candidate in DEFAULT_MODEL_CANDIDATES:
-        if candidate.exists():
+        if candidate.is_file():
             return candidate
 
     searched = "\n".join(str(path) for path in DEFAULT_MODEL_CANDIDATES)
