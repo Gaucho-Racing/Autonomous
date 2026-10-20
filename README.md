@@ -308,6 +308,12 @@ seeded train/validation shuffle, and clips boxes to the image before normalizati
 and small-box filtering. Running conversion deletes and recreates
 `data/yolo_format`, so preserve any needed output before rerunning it.
 
+Training initializes from `models/fsoco_yolo26n/weights/last.pt` when it is a
+file, otherwise `best.pt`, then `yolo26n.pt` if neither exists as a file. This
+loads weights into a new training run; the script does not request `resume=True`.
+It selects CUDA when available, otherwise CPU; set `TRAIN_DEVICE` to override
+that choice. Apple MPS remains disabled by default.
+
 The webcam utility defaults to camera `0` and selects the first model file in its
 fallback list: YOLO26 `best.pt`, then legacy YOLOv8 `best.pt` and `last.pt`.
 Use `--model` to select a specific file and `--camera` for another camera index:
