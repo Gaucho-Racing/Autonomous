@@ -76,9 +76,9 @@ def existing_checkpoint():
     weights_dir = OUTPUT_DIR / RUN_NAME / "weights"
     last_ckpt = weights_dir / "last.pt"
     best_ckpt = weights_dir / "best.pt"
-    if last_ckpt.exists():
+    if last_ckpt.is_file():
         return last_ckpt
-    if best_ckpt.exists():
+    if best_ckpt.is_file():
         return best_ckpt
     return None
 
