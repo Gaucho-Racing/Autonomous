@@ -75,14 +75,15 @@ class DatasetConversionTest(unittest.TestCase):
             team_z / "ann" / "z.json",
         }
         directories = {root, team_a, team_z, team_a / "img", team_a / "ann",
-                       team_z / "img", team_z / "ann", images_a[4]}
+                       team_z / "img", team_z / "ann", images_a[4],
+                       team_a / "ann" / "a.json", team_a / "ann" / "unpaired.jpg.json"}
         with patch.object(CONVERTER, "FSOCO_DIR", root), \
                 patch.object(Path, "iterdir", lambda path: iter(listings[path])), \
                 patch.object(Path, "glob", lambda path, pattern: (
                     item for item in listings[path] if fnmatch.fnmatchcase(item.name, pattern)
                 )), \
                 patch.object(Path, "is_dir", lambda path: path in directories), \
-                patch.object(Path, "is_file", lambda path: path not in directories), \
+                patch.object(Path, "is_file", lambda path: (path in annotations or path in images_a or path == image_z) and path not in directories), \
                 patch.object(Path, "exists", lambda path: path in directories or path in annotations):
             samples = CONVERTER.find_samples()
         self.assertEqual(samples, [

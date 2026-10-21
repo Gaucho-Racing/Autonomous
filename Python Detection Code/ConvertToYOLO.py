@@ -123,10 +123,10 @@ def find_samples():
             if not img_path.is_file() or img_path.suffix.lower() not in (".jpg", ".jpeg", ".png"):
                 continue
             ann_path = ann_dir / f"{img_path.stem}.json"
-            if not ann_path.exists():
+            if not ann_path.is_file():
                 ann_path = ann_dir / f"{img_path.name}.json"
 
-            if ann_path.exists():
+            if ann_path.is_file():
                 all_samples.append((img_path, ann_path))
 
     return all_samples
