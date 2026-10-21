@@ -308,6 +308,10 @@ seeded train/validation shuffle, and clips boxes to the image before normalizati
 and small-box filtering. Running conversion deletes and recreates
 `data/yolo_format`, so preserve any needed output before rerunning it.
 
+Annotation discovery tries `<image-stem>.json`, then `<image-filename>.json`,
+and accepts only files. Boxes with NaN or infinite coordinates are skipped;
+other valid boxes in the same annotation are still converted.
+
 Training initializes from `models/fsoco_yolo26n/weights/last.pt` when it is a
 file, otherwise `best.pt`, then `yolo26n.pt` if neither exists as a file. This
 loads weights into a new training run; the script does not request `resume=True`.
