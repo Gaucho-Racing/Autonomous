@@ -1,4 +1,5 @@
 import json
+import math
 import random
 import shutil
 from pathlib import Path
@@ -63,6 +64,8 @@ def supervisely_to_yolo(annotation, img_width, img_height):
 
         x1, y1 = exterior[0]
         x2, y2 = exterior[1]
+        if not all(math.isfinite(value) for value in (x1, y1, x2, y2)):
+            continue
         x1 = max(0.0, min(img_width, x1))
         x2 = max(0.0, min(img_width, x2))
         y1 = max(0.0, min(img_height, y1))

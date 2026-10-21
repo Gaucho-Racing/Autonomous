@@ -41,6 +41,19 @@ class DatasetConversionTest(unittest.TestCase):
         self.assertEqual(self.labels_for([[20, 20], [80, 80]]), expected)
         self.assertEqual(self.labels_for([[80, 80], [20, 20]]), expected)
 
+    def test_nonfinite_boxes_are_skipped_without_losing_valid_boxes(self):
+        valid = {"classTitle": "yellow_cone", "points": {"exterior": [[20, 20], [80, 80]]}}
+        for coordinate in range(4):
+            for value in (float("nan"), float("inf"), -float("inf")):
+                corners = [[20, 20], [80, 80]]
+                corners[coordinate // 2][coordinate % 2] = value
+                invalid = {"classTitle": "blue_cone", "points": {"exterior": corners}}
+                with self.subTest(coordinate=coordinate, value=value):
+                    self.assertEqual(
+                        CONVERTER.supervisely_to_yolo({"objects": [invalid, valid]}, 100, 100),
+                        ["1 0.500000 0.500000 0.600000 0.600000"],
+                    )
+
     def test_discovery_filters_and_sorts_images(self):
         root = Path("/dataset")
         team_a, team_z = root / "a", root / "z"
