@@ -3,7 +3,7 @@ import fnmatch
 from pathlib import Path
 from types import ModuleType
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, mock_open, patch
 
 
 SOURCE = Path(__file__).resolve().parents[2] / "Python Detection Code" / "ConvertToYOLO.py"
@@ -53,6 +53,45 @@ class DatasetConversionTest(unittest.TestCase):
                         CONVERTER.supervisely_to_yolo({"objects": [invalid, valid]}, 100, 100),
                         ["1 0.500000 0.500000 0.600000 0.600000"],
                     )
+
+    def test_conversion_uses_distinct_repeatable_output_names(self):
+        root = Path("/dataset")
+        images = [
+            root / "team_a" / "frame.jpg",
+            root / "team_b" / "frame.jpg",
+            root / "team_c" / "img" / "frame.jpg",
+            root / "team_c" / "img" / "frame.png",
+        ]
+        samples = [(image, image.with_suffix(".json")) for image in images]
+        image_api = Mock()
+        image_api.open.return_value.__enter__ = Mock(return_value=Mock(size=(100, 100)))
+        image_api.open.return_value.__exit__ = Mock(return_value=False)
+        with patch.object(CONVERTER, "FSOCO_DIR", root), \
+                patch.object(CONVERTER, "TRAIN_RATIO", 1.0), \
+                patch.object(CONVERTER, "reset_output_dirs") as reset, \
+                patch.object(CONVERTER, "find_samples", return_value=samples), \
+                patch.object(CONVERTER.random, "shuffle"), \
+                patch.object(CONVERTER, "tqdm", side_effect=lambda values: values), \
+                patch.object(CONVERTER, "Image", image_api), \
+                patch.object(Path, "exists", return_value=True), \
+                patch.object(Path, "open", mock_open(read_data='{"objects": []}')), \
+                patch.object(CONVERTER, "supervisely_to_yolo", return_value=["0 0.5 0.5 0.2 0.2"]), \
+                patch.object(CONVERTER.shutil, "copy") as copy, \
+                patch.object(Path, "write_text", autospec=True) as write, \
+                patch.object(CONVERTER, "write_data_config"), \
+                patch("builtins.print"):
+            CONVERTER.convert_dataset()
+            first_names = [call.args[1] for call in copy.call_args_list]
+            self.assertEqual(len(first_names), len(images))
+            self.assertEqual(len({name.stem for name in first_names}), len(images))
+            self.assertEqual(write.call_count, len(images))
+            self.assertEqual(
+                [call.args[0].name for call in write.call_args_list],
+                [name.with_suffix(".txt").name for name in first_names],
+            )
+            CONVERTER.convert_dataset()
+            self.assertEqual([call.args[1] for call in copy.call_args_list[len(images):]], first_names)
+            self.assertEqual(reset.call_count, 2)
 
     def test_discovery_filters_and_sorts_images(self):
         root = Path("/dataset")

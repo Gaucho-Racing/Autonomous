@@ -1,3 +1,4 @@
+import hashlib
 import json
 import math
 import random
@@ -194,7 +195,9 @@ def convert_dataset():
                 if not yolo_labels:
                     continue
 
-                out_name = f"{img_path.parent.parent.name}_{img_path.stem}"
+                source_path = img_path.relative_to(FSOCO_DIR).as_posix()
+                source_id = hashlib.sha256(source_path.encode("utf-8")).hexdigest()[:16]
+                out_name = f"{img_path.stem}_{source_id}"
                 out_img_path = OUTPUT_DIR / split / "images" / f"{out_name}{img_path.suffix.lower()}"
                 out_label_path = OUTPUT_DIR / split / "labels" / f"{out_name}.txt"
 
