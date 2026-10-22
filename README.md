@@ -312,6 +312,11 @@ Annotation discovery tries `<image-stem>.json`, then `<image-filename>.json`,
 and accepts only files. Boxes with NaN or infinite coordinates are skipped;
 other valid boxes in the same annotation are still converted.
 
+Converted image and label names share the original image stem plus a stable
+16-character SHA-256 suffix derived from its path relative to `FSOCO_DIR`,
+including the source extension. This distinguishes repeated stems across team
+folders and image formats. Existing converted files are not renamed automatically.
+
 Training initializes from `models/fsoco_yolo26n/weights/last.pt` when it is a
 file, otherwise `best.pt`, then `yolo26n.pt` if neither exists as a file. This
 loads weights into a new training run; the script does not request `resume=True`.
