@@ -305,8 +305,12 @@ Conversion reads `~/Downloads/fsoco_bounding_boxes_train` by default; set
 `FSOCO_DIR` to use another source. It pairs `.jpg`, `.jpeg`, and `.png` images
 (case-insensitive extensions) with matching annotations, sorts them before the
 seeded train/validation shuffle, and clips boxes to the image before normalization
-and small-box filtering. Running conversion deletes and recreates
-`data/yolo_format`, so preserve any needed output before rerunning it.
+and small-box filtering. Conversion checks that the source is a directory and
+discovers image/annotation pairs before replacing output. An invalid source, no
+matching pairs, or an error during discovery leaves existing output untouched.
+Once pairs are found, conversion deletes and recreates `data/yolo_format`, so
+preserve any needed output before rerunning it. This preflight does not validate
+every image or annotation; processing failures can still occur after replacement.
 
 Annotation discovery tries `<image-stem>.json`, then `<image-filename>.json`,
 and accepts only files. Boxes with NaN or infinite coordinates are skipped;
