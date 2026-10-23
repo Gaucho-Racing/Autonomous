@@ -54,6 +54,42 @@ class DatasetConversionTest(unittest.TestCase):
                         ["1 0.500000 0.500000 0.600000 0.600000"],
                     )
 
+    def test_invalid_source_preserves_output(self):
+        source = Mock(spec=Path)
+        source.exists.return_value = True
+        source.is_dir.return_value = False
+        with patch.object(CONVERTER, "FSOCO_DIR", source), \
+                patch.object(CONVERTER, "reset_output_dirs") as reset, \
+                patch.object(CONVERTER, "find_samples", side_effect=AssertionError("Invalid source read")), \
+                patch.object(CONVERTER, "write_data_config") as config, \
+                patch("builtins.print"):
+            CONVERTER.convert_dataset()
+            reset.assert_not_called()
+            config.assert_not_called()
+
+    def test_empty_source_preserves_output(self):
+        with patch.object(Path, "exists", return_value=True), \
+                patch.object(Path, "is_dir", return_value=True), \
+                patch.object(CONVERTER, "reset_output_dirs") as reset, \
+                patch.object(CONVERTER, "find_samples", return_value=[]), \
+                patch.object(CONVERTER, "write_data_config") as config, \
+                patch("builtins.print"):
+            CONVERTER.convert_dataset()
+            reset.assert_not_called()
+            config.assert_not_called()
+
+    def test_discovery_failure_preserves_output(self):
+        with patch.object(Path, "exists", return_value=True), \
+                patch.object(Path, "is_dir", return_value=True), \
+                patch.object(CONVERTER, "reset_output_dirs") as reset, \
+                patch.object(CONVERTER, "find_samples", side_effect=OSError("Unreadable source")), \
+                patch.object(CONVERTER, "write_data_config") as config, \
+                patch("builtins.print"):
+            with self.assertRaisesRegex(OSError, "Unreadable source"):
+                CONVERTER.convert_dataset()
+            reset.assert_not_called()
+            config.assert_not_called()
+
     def test_conversion_uses_distinct_repeatable_output_names(self):
         root = Path("/dataset")
         images = [
@@ -74,6 +110,7 @@ class DatasetConversionTest(unittest.TestCase):
                 patch.object(CONVERTER, "tqdm", side_effect=lambda values: values), \
                 patch.object(CONVERTER, "Image", image_api), \
                 patch.object(Path, "exists", return_value=True), \
+                patch.object(Path, "is_dir", return_value=True), \
                 patch.object(Path, "open", mock_open(read_data='{"objects": []}')), \
                 patch.object(CONVERTER, "supervisely_to_yolo", return_value=["0 0.5 0.5 0.2 0.2"]), \
                 patch.object(CONVERTER.shutil, "copy") as copy, \

@@ -152,13 +152,12 @@ def convert_dataset():
     print(f"Output dataset: {OUTPUT_DIR}")
     print(f"Filtering boxes smaller than {MIN_BOX_SIZE_PX:.1f}px at imgsz={TRAIN_IMGSZ}")
 
-    if not FSOCO_DIR.exists():
+    if not FSOCO_DIR.is_dir():
         print("\nDataset directory not found.")
         print(f"Expected location: {FSOCO_DIR}")
         print("Set FSOCO_DIR to override the source path.")
         return
 
-    reset_output_dirs()
     all_samples = find_samples()
 
     print(f"Found {len(all_samples)} image-annotation pairs")
@@ -169,6 +168,8 @@ def convert_dataset():
         print("      img/")
         print("      ann/")
         return
+
+    reset_output_dirs()
 
     random.seed(42)
     random.shuffle(all_samples)
