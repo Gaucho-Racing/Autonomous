@@ -47,6 +47,8 @@ def supervisely_to_yolo(annotation, img_width, img_height):
     yolo_labels = []
 
     for obj in annotation.get("objects", []):
+        if not isinstance(obj, dict) or not isinstance(obj.get("classTitle", ""), str):
+            continue
         class_title = obj.get("classTitle", "").lower().replace(" ", "_")
 
         class_idx = None
@@ -59,13 +61,18 @@ def supervisely_to_yolo(annotation, img_width, img_height):
             continue
 
         points = obj.get("points", {})
+        if not isinstance(points, dict):
+            continue
         exterior = points.get("exterior", [])
-        if len(exterior) < 2:
-          continue
+        if not isinstance(exterior, (list, tuple)) or len(exterior) < 2:
+            continue
 
-        x1, y1 = exterior[0]
-        x2, y2 = exterior[1]
-        if not all(math.isfinite(value) for value in (x1, y1, x2, y2)):
+        try:
+            x1, y1 = exterior[0]
+            x2, y2 = exterior[1]
+            if not all(math.isfinite(value) for value in (x1, y1, x2, y2)):
+                continue
+        except (TypeError, ValueError, OverflowError):
             continue
         x1 = max(0.0, min(img_width, x1))
         x2 = max(0.0, min(img_width, x2))

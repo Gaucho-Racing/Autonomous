@@ -54,6 +54,22 @@ class DatasetConversionTest(unittest.TestCase):
                         ["1 0.500000 0.500000 0.600000 0.600000"],
                     )
 
+    def test_malformed_objects_do_not_discard_valid_boxes(self):
+        valid = {"classTitle": "yellow_cone", "points": {"exterior": [[20, 20], [80, 80]]}}
+        malformed = [None, 7, "blue_cone", {"classTitle": None}, {"classTitle": 3}]
+        for points in (None, [], {"exterior": None}, {"exterior": 7},
+                       {"exterior": {"a": [20, 20], "b": [80, 80]}},
+                       {"exterior": [[20], [80, 80]]},
+                       {"exterior": [[20, 20, 30], [80, 80]]},
+                       {"exterior": [["bad", 20], [80, 80]]}):
+            malformed.append({"classTitle": "blue_cone", "points": points})
+        for obj in malformed:
+            with self.subTest(obj=obj):
+                self.assertEqual(
+                    CONVERTER.supervisely_to_yolo({"objects": [obj, valid]}, 100, 100),
+                    ["1 0.500000 0.500000 0.600000 0.600000"],
+                )
+
     def test_invalid_source_preserves_output(self):
         source = Mock(spec=Path)
         source.exists.return_value = True
