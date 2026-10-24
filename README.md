@@ -313,8 +313,9 @@ preserve any needed output before rerunning it. This preflight does not validate
 every image or annotation; processing failures can still occur after replacement.
 
 Annotation discovery tries `<image-stem>.json`, then `<image-filename>.json`,
-and accepts only files. Boxes with NaN or infinite coordinates are skipped;
-other valid boxes in the same annotation are still converted.
+and accepts only files. Objects with invalid entry types, class-title types,
+point containers, or box coordinates are skipped, as are boxes with NaN or infinite
+coordinates. Other valid boxes in the same annotation are still converted.
 
 Converted image and label names share the original image stem plus a stable
 16-character SHA-256 suffix derived from its path relative to `FSOCO_DIR`,
