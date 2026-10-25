@@ -312,6 +312,10 @@ Once pairs are found, conversion deletes and recreates `data/yolo_format`, so
 preserve any needed output before rerunning it. This preflight does not validate
 every image or annotation; processing failures can still occur after replacement.
 
+Conversion writes `fsoco.yaml` in UTF-8 and quotes and escapes the dataset
+root, preserving Unicode folder names and YAML-sensitive path characters such
+as quotes, backslashes, `: `, and ` #`.
+
 Annotation discovery tries `<image-stem>.json`, then `<image-filename>.json`,
 and accepts only files. Objects with invalid entry types, class-title types,
 point containers, or box coordinates are skipped, as are boxes with NaN or infinite
