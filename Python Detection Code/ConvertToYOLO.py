@@ -96,7 +96,7 @@ def supervisely_to_yolo(annotation, img_width, img_height):
 def write_data_config():
     """Write fsoco.yaml in the repo root."""
     lines = [
-        f"path: {OUTPUT_DIR}",
+        f"path: {json.dumps(str(OUTPUT_DIR), ensure_ascii=False)}",
         "train: train/images",
         "val: val/images",
         "",
@@ -105,7 +105,7 @@ def write_data_config():
     for class_idx, class_name in CLASS_NAMES.items():
         lines.append(f"  {class_idx}: {class_name}")
 
-    DATA_CONFIG_PATH.write_text("\n".join(lines) + "\n", encoding="ascii")
+    DATA_CONFIG_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"Wrote dataset config: {DATA_CONFIG_PATH}")
 
 

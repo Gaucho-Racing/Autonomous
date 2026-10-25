@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import fnmatch
 from pathlib import Path
 from types import ModuleType
@@ -145,6 +146,21 @@ class DatasetConversionTest(unittest.TestCase):
             CONVERTER.convert_dataset()
             self.assertEqual([call.args[1] for call in copy.call_args_list[len(images):]], first_names)
             self.assertEqual(reset.call_count, 2)
+
+    def test_config_path_round_trips_special_characters(self):
+        for value in ("/datasets/plain", "/datasets/run: 1 #cones", "/datasets/café/赛道",
+                      '/datasets/quote"and\\slash', "/datasets/line\nbreak"):
+            destination = Mock(spec=Path)
+            with self.subTest(path=value), \
+                    patch.object(CONVERTER, "OUTPUT_DIR", Path(value)), \
+                    patch.object(CONVERTER, "DATA_CONFIG_PATH", destination), \
+                    patch("builtins.print"):
+                CONVERTER.write_data_config()
+                destination.write_text.assert_called_once()
+                args, kwargs = destination.write_text.call_args
+                args[0].encode(kwargs["encoding"])
+                scalar = args[0].splitlines()[0].removeprefix("path: ")
+                self.assertEqual(json.loads(scalar), str(Path(value)))
 
     def test_discovery_filters_and_sorts_images(self):
         root = Path("/dataset")
