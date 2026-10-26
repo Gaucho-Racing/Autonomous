@@ -306,11 +306,13 @@ Conversion reads `~/Downloads/fsoco_bounding_boxes_train` by default; set
 (case-insensitive extensions) with matching annotations, sorts them before the
 seeded train/validation shuffle, and clips boxes to the image before normalization
 and small-box filtering. Conversion checks that the source is a directory and
-discovers image/annotation pairs before replacing output. An invalid source, no
-matching pairs, or an error during discovery leaves existing output untouched.
-Once pairs are found, conversion deletes and recreates `data/yolo_format`, so
-preserve any needed output before rerunning it. This preflight does not validate
-every image or annotation; processing failures can still occur after replacement.
+discovers image/annotation pairs before replacing output. An invalid source,
+fewer than two matching pairs, or an error during discovery leaves existing
+output untouched. At least two pairs are needed for separate training and
+validation sets. Once that minimum is met, conversion deletes and recreates
+`data/yolo_format`, so preserve any needed output before rerunning it. This
+preflight does not validate every image or annotation; processing failures or
+skipped samples can still leave an empty split after replacement.
 
 Conversion writes `fsoco.yaml` in UTF-8 and quotes and escapes the dataset
 root, preserving Unicode folder names and YAML-sensitive path characters such
