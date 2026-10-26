@@ -95,6 +95,19 @@ class DatasetConversionTest(unittest.TestCase):
             reset.assert_not_called()
             config.assert_not_called()
 
+    def test_single_sample_preserves_existing_output(self):
+        samples = [(Path("/dataset/team/frame.jpg"), Path("/dataset/team/frame.json"))]
+        with patch.object(Path, "is_dir", return_value=True), \
+                patch.object(CONVERTER, "find_samples", return_value=samples), \
+                patch.object(CONVERTER, "reset_output_dirs") as reset, \
+                patch.object(CONVERTER, "tqdm", return_value=[]) as progress, \
+                patch.object(CONVERTER, "write_data_config") as config, \
+                patch("builtins.print"):
+            CONVERTER.convert_dataset()
+            reset.assert_not_called()
+            progress.assert_not_called()
+            config.assert_not_called()
+
     def test_discovery_failure_preserves_output(self):
         with patch.object(Path, "exists", return_value=True), \
                 patch.object(Path, "is_dir", return_value=True), \

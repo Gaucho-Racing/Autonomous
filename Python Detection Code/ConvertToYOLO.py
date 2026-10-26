@@ -176,6 +176,10 @@ def convert_dataset():
         print("      ann/")
         return
 
+    if len(all_samples) < 2:
+        print("\nAt least two image-annotation pairs are required for train/validation splits.")
+        return
+
     reset_output_dirs()
 
     random.seed(42)
