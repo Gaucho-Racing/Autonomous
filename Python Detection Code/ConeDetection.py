@@ -103,11 +103,17 @@ def train():
     val_dir = DATA_DIR / "val" / "images"
     train_cache = DATA_DIR / "train" / "labels.cache"
     val_cache = DATA_DIR / "val" / "labels.cache"
-    if not train_dir.is_dir() or not any(train_dir.iterdir()):
+    if not train_dir.is_dir() or not any(
+        path.is_file() and path.suffix.lower() in (".jpg", ".jpeg", ".png")
+        for path in train_dir.iterdir()
+    ):
         print(f"\nTraining data not found in: {train_dir}")
         print("Run ConvertToYOLO.py first.")
         return
-    if not val_dir.is_dir() or not any(val_dir.iterdir()):
+    if not val_dir.is_dir() or not any(
+        path.is_file() and path.suffix.lower() in (".jpg", ".jpeg", ".png")
+        for path in val_dir.iterdir()
+    ):
         print(f"\nValidation data not found in: {val_dir}")
         print("Run ConvertToYOLO.py first.")
         return
