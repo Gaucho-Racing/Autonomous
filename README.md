@@ -334,6 +334,11 @@ loads weights into a new training run; the script does not request `resume=True`
 It selects CUDA when available, otherwise CPU; set `TRAIN_DEVICE` to override
 that choice. Apple MPS remains disabled by default.
 
+Training requires at least one regular `.jpg`, `.jpeg`, or `.png` file in each
+converted `train/images` and `val/images` folder; extensions are case-insensitive.
+Folders containing only other files or subdirectories stop before cache cleanup
+and model loading. This check does not verify image contents or labels.
+
 The webcam utility defaults to camera `0` and selects the first model file in its
 fallback list: YOLO26 `best.pt`, then legacy YOLOv8 `best.pt` and `last.pt`.
 Use `--model` to select a specific file and `--camera` for another camera index:
