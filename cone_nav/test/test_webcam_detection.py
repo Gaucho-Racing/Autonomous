@@ -41,6 +41,31 @@ class WebcamDetectionTest(unittest.TestCase):
             with self.assertRaisesRegex(FileNotFoundError, "Pass --model"):
                 WEBCAM.resolve_model_path("")
 
+    def test_invalid_inference_arguments_stop_before_loading(self):
+        arguments = ["--conf=-0.1", "--conf=1.1", "--conf=nan", "--conf=inf",
+                     "--conf=-inf", "--imgsz=0", "--imgsz=-1"]
+        for argument in arguments:
+            with self.subTest(argument=argument), \
+                    patch("sys.argv", ["WebcamDetection.py", argument]), \
+                    patch("sys.stderr"), \
+                    patch.object(WEBCAM, "resolve_model_path", side_effect=AssertionError("Unexpected model lookup")) as resolve, \
+                    patch.object(WEBCAM, "YOLO") as yolo, \
+                    patch.object(WEBCAM, "cv2") as cv2:
+                with self.assertRaises(SystemExit) as result:
+                    WEBCAM.main()
+                self.assertEqual(result.exception.code, 2)
+                resolve.assert_not_called()
+                yolo.assert_not_called()
+                cv2.VideoCapture.assert_not_called()
+
+    def test_valid_inference_argument_boundaries_reach_model_lookup(self):
+        for arguments in ([], ["--conf=0", "--imgsz=1"], ["--conf=1", "--imgsz=640"]):
+            with self.subTest(arguments=arguments), \
+                    patch("sys.argv", ["WebcamDetection.py"] + arguments), \
+                    patch.object(WEBCAM, "resolve_model_path", side_effect=RuntimeError("Reached model lookup")):
+                with self.assertRaisesRegex(RuntimeError, "Reached model lookup"):
+                    WEBCAM.main()
+
     def test_camera_cleanup_on_failures(self):
         for failure in ("open", "read", "predict"):
             with self.subTest(failure=failure):

@@ -82,6 +82,10 @@ def main():
     parser.add_argument("--conf", type=float, default=0.25, help="Confidence threshold")
     parser.add_argument("--imgsz", type=int, default=640, help="Inference image size")
     args = parser.parse_args()
+    if not 0.0 <= args.conf <= 1.0:
+        parser.error("--conf must be a finite number between 0 and 1")
+    if args.imgsz <= 0:
+        parser.error("--imgsz must be a positive integer")
 
     model_path = resolve_model_path(args.model)
     print(f"Using model: {model_path}")
