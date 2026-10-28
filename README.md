@@ -348,6 +348,8 @@ python3 "Python Detection Code/WebcamDetection.py" \
   --camera 1 --model /absolute/path/to/best.pt --conf 0.25 --imgsz 640
 ```
 
+`--conf` must be finite and between `0` and `1` inclusive; `--imgsz` must be a
+positive integer. Invalid values stop before model loading or camera access.
 Press `q` in the preview window to quit.
 
 Training outputs and datasets are intentionally ignored by Git. Only the TensorRT runtime contract and class mapping are required by `cone_nav`.
