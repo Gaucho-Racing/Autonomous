@@ -318,6 +318,11 @@ Conversion writes `fsoco.yaml` in UTF-8 and quotes and escapes the dataset
 root, preserving Unicode folder names and YAML-sensitive path characters such
 as quotes, backslashes, `: `, and ` #`.
 
+Each team folder may contain separate `img/` and `ann/` directories, or image
+and annotation files together directly in that team folder. Discovery uses the
+nested layout only when both paths are directories; otherwise it checks the flat
+layout. Images placed directly in `FSOCO_DIR` are not scanned.
+
 Annotation discovery tries `<image-stem>.json`, then `<image-filename>.json`,
 and accepts only files. Objects with invalid entry types, class-title types,
 point containers, or box coordinates are skipped, as are boxes with NaN or infinite
