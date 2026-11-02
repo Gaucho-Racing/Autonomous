@@ -175,6 +175,41 @@ class DatasetConversionTest(unittest.TestCase):
                 scalar = args[0].splitlines()[0].removeprefix("path: ")
                 self.assertEqual(json.loads(scalar), str(Path(value)))
 
+    def test_discovery_requires_layout_directories(self):
+        root = Path("/dataset")
+        team = root / "team"
+        img_dir, ann_dir = team / "img", team / "ann"
+        flat_image, flat_annotation = team / "frame.jpg", team / "frame.json"
+        nested_image, nested_annotation = img_dir / "frame.jpg", ann_dir / "frame.json"
+        for layout in ("nested", "flat", "img_file", "ann_file"):
+            directories = {root, team}
+            files = {flat_image, flat_annotation}
+            if layout == "nested":
+                directories.update((img_dir, ann_dir))
+                files.update((nested_image, nested_annotation))
+            elif layout == "img_file":
+                files.add(img_dir)
+                directories.add(ann_dir)
+            elif layout == "ann_file":
+                directories.add(img_dir)
+                files.update((ann_dir, nested_image))
+            listings = {root: [team], team: [flat_image, flat_annotation, img_dir, ann_dir],
+                        img_dir: [nested_image]}
+
+            def entries(path):
+                if path not in directories:
+                    raise NotADirectoryError(str(path))
+                return iter(listings[path])
+
+            with self.subTest(layout=layout), \
+                    patch.object(CONVERTER, "FSOCO_DIR", root), \
+                    patch.object(Path, "iterdir", entries), \
+                    patch.object(Path, "exists", lambda path: path in directories or path in files), \
+                    patch.object(Path, "is_dir", lambda path: path in directories), \
+                    patch.object(Path, "is_file", lambda path: path in files):
+                expected = (nested_image, nested_annotation) if layout == "nested" else (flat_image, flat_annotation)
+                self.assertEqual(CONVERTER.find_samples(), [expected])
+
     def test_discovery_filters_and_sorts_images(self):
         root = Path("/dataset")
         team_a, team_z = root / "a", root / "z"

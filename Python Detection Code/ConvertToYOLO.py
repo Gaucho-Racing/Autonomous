@@ -120,7 +120,7 @@ def find_samples():
         img_dir = team_dir / "img"
         ann_dir = team_dir / "ann"
 
-        if not img_dir.exists() or not ann_dir.exists():
+        if not img_dir.is_dir() or not ann_dir.is_dir():
             img_dir = team_dir
             ann_dir = team_dir
 
