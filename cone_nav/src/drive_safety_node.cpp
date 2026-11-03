@@ -69,7 +69,7 @@ private:
       return;
     }
     if (!safety_enabled_) {
-      publishCommand(*msg, std::max(0.0, msg->drive.speed));
+      publishCommand(*msg, std::max(0.0, static_cast<double>(msg->drive.speed)));
       return;
     }
     if (!gridFresh()) {
@@ -77,7 +77,7 @@ private:
       return;
     }
 
-    const double speed = std::max(0.0, msg->drive.speed);
+    const double speed = std::max(0.0, static_cast<double>(msg->drive.speed));
     const double clearance = pathClearance(msg->drive.steering_angle);
     if (!std::isfinite(clearance)) {
       publishCommand(*msg, speed);

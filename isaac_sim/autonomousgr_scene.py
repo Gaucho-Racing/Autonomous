@@ -191,11 +191,11 @@ def create_ros_graph():
         stage.RemovePrim(graph_path)
 
     keys = og.Controller.Keys
-    og.Controller.edit(
+    graph, _, _, _ = og.Controller.edit(
         {"graph_path": graph_path, "evaluator_name": "execution"},
         {
             keys.CREATE_NODES: [
-                ("Tick", "omni.graph.action.OnPlaybackTick"),
+                ("Tick", "omni.graph.action.OnTick"),
                 ("Context", "isaacsim.ros2.bridge.ROS2Context"),
                 ("ReadSimTime", "isaacsim.core.nodes.IsaacReadSimulationTime"),
                 ("PublishClock", "isaacsim.ros2.bridge.ROS2PublishClock"),
@@ -308,6 +308,9 @@ def create_ros_graph():
             ],
         },
     )
+    # Explicitly request the graph's initial evaluation so its helper nodes are
+    # instantiated before the simulation loop starts.
+    og.Controller.evaluate_sync(graph)
 
 
 def main():
@@ -321,12 +324,28 @@ def main():
     for _ in range(10):
         SIMULATION_APP.update()
 
+    # The full streaming experience can change timeline state while completing
+    # deferred startup. Force a clean stop/play transition after those updates
+    # so playback callbacks and the one-shot camera writer setup run reliably.
+    app_utils.stop()
+    SIMULATION_APP.update()
+    app_utils.play()
+    for _ in range(3):
+        SIMULATION_APP.update()
+
     print("AUTONOMOUSGR_ISAAC_READY", flush=True)
     steps = 0
     try:
         while SIMULATION_APP.is_running():
             SIMULATION_APP.update()
             steps += 1
+            if steps % 600 == 0:
+                print(
+                    "AUTONOMOUSGR_ISAAC_HEALTH "
+                    f"playing={app_utils.is_playing()} "
+                    f"sim_time={SimulationManager.get_simulation_time():.3f}",
+                    flush=True,
+                )
             if ARGS.test_steps > 0 and steps >= ARGS.test_steps:
                 break
     except KeyboardInterrupt:

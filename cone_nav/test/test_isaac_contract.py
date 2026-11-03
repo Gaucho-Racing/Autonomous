@@ -120,6 +120,18 @@ class IsaacIntegrationContractTest(unittest.TestCase):
         for scenario in ("clear", "center", "right", "narrow", "blocked"):
             self.assertIn(f'"{scenario}"', scene)
 
+    def test_streaming_startup_rearms_timeline_before_ready(self):
+        scene = (REPOSITORY_ROOT / "isaac_sim" / "autonomousgr_scene.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('("Tick", "omni.graph.action.OnTick")', scene)
+        self.assertIn("og.Controller.evaluate_sync(graph)", scene)
+        stop = "app_utils.stop()"
+        play = "app_utils.play()"
+        ready = "AUTONOMOUSGR_ISAAC_READY"
+        self.assertLess(scene.index(stop), scene.index(play, scene.index(stop)))
+        self.assertLess(scene.index(play, scene.index(stop)), scene.index(ready))
+
 
 if __name__ == "__main__":
     unittest.main()

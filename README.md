@@ -95,6 +95,10 @@ Legacy `cx, cy, width, height` engines remain selectable with
 `2=orange/big cone`. TensorRT engines are GPU- and TensorRT-version-specific;
 build the production engine on the target platform.
 
+TensorRT inference runs on the NVIDIA GPU. Image color conversion, resizing,
+normalization, and HWC-to-CHW packing use standard OpenCV before the input is
+copied to CUDA, so the ROS host does not require a CUDA-enabled OpenCV build.
+
 ## Build
 
 ```bash
@@ -168,6 +172,12 @@ ENABLE_LIVESTREAM=1 ./isaac_sim/run_brev.sh
 Connect a port-capable WebRTC client to `<public-host>:29398`. TCP carries
 signaling and UDP carries video, so both mappings must be reachable and the
 public and destination port numbers must match.
+
+Wait for `AUTONOMOUSGR_ISAAC_READY` before starting the autonomy stack. The
+scene re-arms timeline playback after the streaming application finishes its
+deferred startup and periodically prints `AUTONOMOUSGR_ISAAC_HEALTH`. Do not
+enable driving until `/clock`, RGB, and depth each produce live ROS messages;
+an advancing health timestamp alone does not prove that the ROS graph is active.
 
 For headless operation:
 

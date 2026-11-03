@@ -4,10 +4,7 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <cuda_runtime_api.h>
 #include <cv_bridge/cv_bridge.h>
-#include <opencv2/core/cuda.hpp>
-#include <opencv2/core/cuda_stream_accessor.hpp>
-#include <opencv2/cudaimgproc.hpp>
-#include <opencv2/cudawarping.hpp>
+#include <opencv2/imgproc.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/image.hpp>
@@ -459,6 +456,7 @@ private:
       return false;
     }
     host_output_.resize(output_count_);
+    host_input_.resize(input_count_);
     return true;
   }
 
@@ -470,11 +468,9 @@ private:
 
     int original_w = 0;
     int original_h = 0;
-    cv::cuda::Stream cv_stream = cv::cuda::StreamAccessor::wrapStream(stream_);
-    if (!preprocess(msg, cv_stream, original_w, original_h)) {
+    if (!preprocess(msg, original_w, original_h)) {
       return;
     }
-    cv_stream.waitForCompletion();
 
 #if NV_TENSORRT_MAJOR >= 10
     const bool addresses_set =
@@ -505,7 +501,6 @@ private:
 
   bool preprocess(
     const sensor_msgs::msg::Image::ConstSharedPtr & msg,
-    cv::cuda::Stream & cv_stream,
     int & original_w,
     int & original_h)
   {
@@ -524,45 +519,51 @@ private:
     original_w = image.cols;
     original_h = image.rows;
 
-    cv::cuda::GpuMat gpu_image;
-    gpu_image.upload(image, cv_stream);
-
-    cv::cuda::GpuMat rgb_image;
+    cv::Mat rgb_image;
     const auto & encoding = msg->encoding;
     if (image.channels() == 4) {
       if (encoding == sensor_msgs::image_encodings::RGBA8) {
-        cv::cuda::cvtColor(gpu_image, rgb_image, cv::COLOR_RGBA2RGB, 0, cv_stream);
+        cv::cvtColor(image, rgb_image, cv::COLOR_RGBA2RGB);
       } else {
-        cv::cuda::cvtColor(gpu_image, rgb_image, cv::COLOR_BGRA2RGB, 0, cv_stream);
+        cv::cvtColor(image, rgb_image, cv::COLOR_BGRA2RGB);
       }
     } else if (image.channels() == 3) {
       if (encoding == sensor_msgs::image_encodings::RGB8) {
-        rgb_image = gpu_image;
+        rgb_image = image;
       } else {
-        cv::cuda::cvtColor(gpu_image, rgb_image, cv::COLOR_BGR2RGB, 0, cv_stream);
+        cv::cvtColor(image, rgb_image, cv::COLOR_BGR2RGB);
       }
     } else if (image.channels() == 1) {
-      cv::cuda::cvtColor(gpu_image, rgb_image, cv::COLOR_GRAY2RGB, 0, cv_stream);
+      cv::cvtColor(image, rgb_image, cv::COLOR_GRAY2RGB);
     } else {
       RCLCPP_WARN(get_logger(), "Unsupported image channel count: %d", image.channels());
       return false;
     }
 
-    cv::cuda::GpuMat resized;
-    cv::cuda::resize(rgb_image, resized, cv::Size(input_w_, input_h_), 0.0, 0.0, cv::INTER_LINEAR, cv_stream);
+    cv::Mat resized;
+    cv::resize(rgb_image, resized, cv::Size(input_w_, input_h_), 0.0, 0.0, cv::INTER_LINEAR);
 
-    cv::cuda::GpuMat normalized;
-    resized.convertTo(normalized, CV_32FC3, 1.0 / 255.0, 0.0, cv_stream);
+    cv::Mat normalized;
+    resized.convertTo(normalized, CV_32FC3, 1.0 / 255.0);
 
-    auto * input = static_cast<float *>(device_bindings_[input_binding_]);
-    std::vector<cv::cuda::GpuMat> channels;
+    std::vector<cv::Mat> channels;
     channels.reserve(3);
     for (int c = 0; c < 3; ++c) {
       channels.emplace_back(
         input_h_, input_w_, CV_32FC1,
-        input + static_cast<size_t>(c) * input_h_ * input_w_);
+        host_input_.data() + static_cast<size_t>(c) * input_h_ * input_w_);
     }
-    cv::cuda::split(normalized, channels, cv_stream);
+    cv::split(normalized, channels);
+
+    const auto status = cudaMemcpyAsync(
+      device_bindings_[input_binding_], host_input_.data(), input_count_ * sizeof(float),
+      cudaMemcpyHostToDevice, stream_);
+    if (status != cudaSuccess) {
+      RCLCPP_WARN(
+        get_logger(), "Failed to copy preprocessed image to CUDA: %s",
+        cudaGetErrorString(status));
+      return false;
+    }
     return true;
   }
 
@@ -689,6 +690,7 @@ private:
   size_t output_count_{0};
   size_t output_bytes_{0};
   std::vector<void *> device_bindings_;
+  std::vector<float> host_input_;
   std::vector<float> host_output_;
 
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
