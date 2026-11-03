@@ -71,6 +71,7 @@ ROBOT_PRIM = "/World/Leatherback"
 LEFT_CAMERA = f"{ROBOT_PRIM}/Sensors/ZED2i/left_camera"
 RIGHT_CAMERA = f"{ROBOT_PRIM}/Sensors/ZED2i/right_camera"
 OPTICAL_FRAME = "zed2i_left_camera_optical_frame"
+RTX_CAMERAS = []
 
 
 def enable_extensions():
@@ -88,7 +89,13 @@ def enable_extensions():
 
 
 def create_camera(stage, path, translation):
-    camera = UsdGeom.Camera.Define(stage, path)
+    # Let the Isaac Sim authoring API create the Camera prim so OmniSensorAPI
+    # is present before the RtxCamera wrapper is constructed.
+    rtx_camera = RtxCamera.create(path=path, tick_rate=ARGS.camera_rate)
+    RTX_CAMERAS.append(rtx_camera)
+    camera = UsdGeom.Camera.Get(stage, path)
+    if not camera:
+        raise RuntimeError(f"Failed to create RTX camera at {path}")
     camera.CreateFocalLengthAttr(2.8)
     camera.CreateHorizontalApertureAttr(5.12)
     camera.CreateVerticalApertureAttr(2.88)
@@ -100,10 +107,6 @@ def create_camera(stage, path, translation):
     # USD cameras look down local -Z with +Y up. This points them along
     # vehicle +X with vehicle +Z up.
     xform.AddOrientOp().Set(Gf.Quatf(0.5, 0.5, -0.5, -0.5))
-    # Apply OmniSensorAPI to the existing USD Camera so Isaac Sim 6 can use
-    # tick-rate-controlled RTX rendering. The plain constructor only wraps an
-    # already-authored sensor and fails when the schema is absent.
-    RtxCamera.create(path=path, tick_rate=ARGS.camera_rate)
 
 
 def create_cone(stage, name, x, y, color):
