@@ -106,7 +106,9 @@ def create_camera(stage, path, translation):
     xform.AddTranslateOp().Set(Gf.Vec3d(*translation))
     # USD cameras look down local -Z with +Y up. This points them along
     # vehicle +X with vehicle +Z up.
-    xform.AddOrientOp().Set(Gf.Quatf(0.5, 0.5, -0.5, -0.5))
+    xform.AddOrientOp(UsdGeom.XformOp.PrecisionDouble).Set(
+        Gf.Quatd(0.5, 0.5, -0.5, -0.5)
+    )
 
 
 def create_cone(stage, name, x, y, color):
