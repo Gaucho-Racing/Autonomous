@@ -338,6 +338,11 @@ validation sets. Once that minimum is met, conversion deletes and recreates
 preflight does not validate every image or annotation; processing failures or
 skipped samples can still leave an empty split after replacement.
 
+Small-box filtering measures the clipped box's shorter side after uniformly
+scaling the image's longest side to `640` pixels. Boxes smaller than `3` pixels
+at that scale are skipped, including on portrait and landscape images. This is
+a pre-augmentation size estimate.
+
 Conversion writes `fsoco.yaml` in UTF-8 and quotes and escapes the dataset
 root, preserving Unicode folder names and YAML-sensitive path characters such
 as quotes, backslashes, `: `, and ` #`.
