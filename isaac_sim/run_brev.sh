@@ -6,6 +6,8 @@ ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-0}"
 PRIVACY_CONSENT="${PRIVACY_CONSENT:-N}"
 ENABLE_LIVESTREAM="${ENABLE_LIVESTREAM:-1}"
 PUBLIC_IP="${PUBLIC_IP:-}"
+ISAAC_SIGNAL_PORT="${ISAAC_SIGNAL_PORT:-49100}"
+ISAAC_STREAM_PORT="${ISAAC_STREAM_PORT:-47998}"
 ISAAC_RESOLUTION_WIDTH="${ISAAC_RESOLUTION_WIDTH:-960}"
 ISAAC_RESOLUTION_HEIGHT="${ISAAC_RESOLUTION_HEIGHT:-540}"
 ISAAC_CAMERA_RATE="${ISAAC_CAMERA_RATE:-20}"
@@ -39,8 +41,8 @@ if [[ "${ENABLE_LIVESTREAM}" == "1" ]]; then
   SCENE_ARGS+=(--livestream)
   KIT_ARGS+=(
     "--/exts/omni.kit.livestream.app/primaryStream/publicIp=${PUBLIC_IP}"
-    "--/exts/omni.kit.livestream.app/primaryStream/signalPort=49100"
-    "--/exts/omni.kit.livestream.app/primaryStream/streamPort=47998"
+    "--/exts/omni.kit.livestream.app/primaryStream/signalPort=${ISAAC_SIGNAL_PORT}"
+    "--/exts/omni.kit.livestream.app/primaryStream/streamPort=${ISAAC_STREAM_PORT}"
   )
 fi
 

@@ -155,6 +155,20 @@ export PUBLIC_IP=<host-public-ip>  # Only required for livestreaming.
 ENABLE_LIVESTREAM=1 ./isaac_sim/run_brev.sh
 ```
 
+If a cloud provider assigns non-default public WebRTC ports, change each Brev
+destination port to match its assigned public port, then pass those values to
+the launcher. For example:
+
+```bash
+ISAAC_SIGNAL_PORT=29398 \
+ISAAC_STREAM_PORT=13653 \
+ENABLE_LIVESTREAM=1 ./isaac_sim/run_brev.sh
+```
+
+Connect a port-capable WebRTC client to `<public-host>:29398`. TCP carries
+signaling and UDP carries video, so both mappings must be reachable and the
+public and destination port numbers must match.
+
 For headless operation:
 
 ```bash
