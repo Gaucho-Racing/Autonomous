@@ -84,7 +84,8 @@ def supervisely_to_yolo(annotation, img_width, img_height):
         width = abs(x2 - x1) / img_width
         height = abs(y2 - y1) / img_height
 
-        min_dim_px = min(width, height) * TRAIN_IMGSZ
+        resize_scale = TRAIN_IMGSZ / max(img_width, img_height)
+        min_dim_px = min(abs(x2 - x1), abs(y2 - y1)) * resize_scale
         if width > 0.0 and height > 0.0 and min_dim_px >= MIN_BOX_SIZE_PX:
             yolo_labels.append(
                 f"{class_idx} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}"

@@ -42,6 +42,22 @@ class DatasetConversionTest(unittest.TestCase):
         self.assertEqual(self.labels_for([[20, 20], [80, 80]]), expected)
         self.assertEqual(self.labels_for([[80, 80], [20, 20]]), expected)
 
+    def test_rectangular_images_reject_boxes_below_resized_threshold(self):
+        cases = ((200, 100, [[20, 20], [80, 20.75]]),
+                 (100, 200, [[20, 20], [20.75, 80]]))
+        for width, height, corners in cases:
+            annotation = {"objects": [{"classTitle": "blue_cone", "points": {"exterior": corners}}]}
+            with self.subTest(width=width, height=height):
+                self.assertEqual(CONVERTER.supervisely_to_yolo(annotation, width, height), [])
+
+    def test_rectangular_images_keep_boxes_above_resized_threshold(self):
+        cases = ((200, 100, [[20, 20], [80, 21]], "0 0.250000 0.205000 0.300000 0.010000"),
+                 (100, 200, [[20, 20], [21, 80]], "0 0.205000 0.250000 0.010000 0.300000"))
+        for width, height, corners, expected in cases:
+            annotation = {"objects": [{"classTitle": "blue_cone", "points": {"exterior": corners}}]}
+            with self.subTest(width=width, height=height):
+                self.assertEqual(CONVERTER.supervisely_to_yolo(annotation, width, height), [expected])
+
     def test_nonfinite_boxes_are_skipped_without_losing_valid_boxes(self):
         valid = {"classTitle": "yellow_cone", "points": {"exterior": [[20, 20], [80, 80]]}}
         for coordinate in range(4):
