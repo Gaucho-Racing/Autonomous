@@ -100,7 +100,10 @@ def create_camera(stage, path, translation):
     # USD cameras look down local -Z with +Y up. This points them along
     # vehicle +X with vehicle +Z up.
     xform.AddOrientOp().Set(Gf.Quatf(0.5, 0.5, -0.5, -0.5))
-    RtxCamera(path=path, tick_rate=ARGS.camera_rate)
+    # Apply OmniSensorAPI to the existing USD Camera so Isaac Sim 6 can use
+    # tick-rate-controlled RTX rendering. The plain constructor only wraps an
+    # already-authored sensor and fails when the schema is absent.
+    RtxCamera.create(path=path, tick_rate=ARGS.camera_rate)
 
 
 def create_cone(stage, name, x, y, color):
