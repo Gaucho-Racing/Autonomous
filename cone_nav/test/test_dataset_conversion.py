@@ -176,6 +176,52 @@ class DatasetConversionTest(unittest.TestCase):
             self.assertEqual([call.args[1] for call in copy.call_args_list[len(images):]], first_names)
             self.assertEqual(reset.call_count, 2)
 
+    def test_conversion_reports_failures_after_remaining_samples(self):
+        root = Path("/dataset")
+        images = [root / "team" / "bad.jpg", root / "team" / "good.jpg"]
+        samples = [(image, image.with_suffix(".json")) for image in images]
+        for failure in ("read", "copy", "label"):
+            image_context = Mock()
+            image_context.__enter__ = Mock(return_value=Mock(size=(100, 100)))
+            image_context.__exit__ = Mock(return_value=False)
+
+            def open_image(path):
+                if failure == "read" and path == images[0]:
+                    raise OSError("Read failed")
+                return image_context
+
+            def copy_image(source, destination):
+                if failure == "copy" and source == images[0]:
+                    raise OSError("Copy failed")
+
+            def write_label(path, *args, **kwargs):
+                if failure == "label" and path.name.startswith("bad_"):
+                    raise OSError("Label write failed")
+
+            image_api = Mock()
+            image_api.open.side_effect = open_image
+            with self.subTest(failure=failure), \
+                    patch.object(CONVERTER, "FSOCO_DIR", root), \
+                    patch.object(CONVERTER, "TRAIN_RATIO", 1.0), \
+                    patch.object(CONVERTER, "reset_output_dirs"), \
+                    patch.object(CONVERTER, "find_samples", return_value=samples), \
+                    patch.object(CONVERTER.random, "shuffle"), \
+                    patch.object(CONVERTER, "tqdm", side_effect=lambda values: values), \
+                    patch.object(CONVERTER, "Image", image_api), \
+                    patch.object(Path, "is_dir", return_value=True), \
+                    patch.object(Path, "open", mock_open(read_data='{"objects": []}')), \
+                    patch.object(CONVERTER, "supervisely_to_yolo", return_value=["0 0.5 0.5 0.2 0.2"]), \
+                    patch.object(CONVERTER.shutil, "copy", side_effect=copy_image) as copy, \
+                    patch.object(Path, "write_text", autospec=True, side_effect=write_label) as write, \
+                    patch.object(CONVERTER, "write_data_config") as config, \
+                    patch("builtins.print") as output:
+                with self.assertRaisesRegex(RuntimeError, "1.*failed"):
+                    CONVERTER.convert_dataset()
+                self.assertTrue(any(call.args[0] == images[1] for call in copy.call_args_list))
+                self.assertTrue(any(call.args[0].name.startswith("good_") for call in write.call_args_list))
+                config.assert_called_once_with()
+                self.assertNotIn(unittest.mock.call("Conversion complete"), output.call_args_list)
+
     def test_config_path_round_trips_special_characters(self):
         for value in ("/datasets/plain", "/datasets/run: 1 #cones", "/datasets/café/赛道",
                       '/datasets/quote"and\\slash', "/datasets/line\nbreak"):

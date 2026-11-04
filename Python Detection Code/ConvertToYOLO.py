@@ -192,7 +192,7 @@ def convert_dataset():
 
     print(f"Train: {len(train_samples)}, Val: {len(val_samples)}")
 
-    stats = {"train": 0, "val": 0, "cones": 0}
+    stats = {"train": 0, "val": 0, "cones": 0, "errors": 0}
     for split, samples in (("train", train_samples), ("val", val_samples)):
         print(f"\nProcessing {split} set...")
 
@@ -220,18 +220,22 @@ def convert_dataset():
                 stats[split] += 1
                 stats["cones"] += len(yolo_labels)
             except Exception as exc:
+                stats["errors"] += 1
                 print(f"\nError processing {img_path}: {exc}")
 
     write_data_config()
 
     print(f"\n{'=' * 60}")
-    print("Conversion complete")
+    print("Conversion finished with errors" if stats["errors"] else "Conversion complete")
     print(f"Train images: {stats['train']}")
     print(f"Val images: {stats['val']}")
     print(f"Total cones: {stats['cones']}")
     print(f"Output dataset: {OUTPUT_DIR}")
     print(f"Dataset config: {DATA_CONFIG_PATH}")
     print(f"{'=' * 60}")
+
+    if stats["errors"]:
+        raise RuntimeError(f"{stats['errors']} image-annotation pair(s) failed during conversion.")
 
 
 if __name__ == "__main__":
