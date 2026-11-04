@@ -338,6 +338,12 @@ validation sets. Once that minimum is met, conversion deletes and recreates
 preflight does not validate every image or annotation; processing failures or
 skipped samples can still leave an empty split after replacement.
 
+Per-sample conversion failures are logged while remaining samples are processed.
+If any sample fails, the summary reports errors and the converter raises an error,
+so the command exits unsuccessfully. Successfully written files and any partial
+output remain for inspection; there is no automatic rollback. Samples with no
+usable boxes are skipped without counting as processing errors.
+
 Small-box filtering measures the clipped box's shorter side after uniformly
 scaling the image's longest side to `640` pixels. Boxes smaller than `3` pixels
 at that scale are skipped, including on portrait and landscape images. This is
