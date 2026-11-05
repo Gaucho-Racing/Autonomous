@@ -88,9 +88,33 @@ class WebcamDetectionTest(unittest.TestCase):
                         with self.assertRaisesRegex(ValueError, "Inference failed"):
                             WEBCAM.main()
                     else:
-                        WEBCAM.main()
+                        with self.assertRaisesRegex(RuntimeError, "Failed to read frame from webcam"):
+                            WEBCAM.main()
+                        model.predict.assert_not_called()
                 camera.release.assert_called_once_with()
                 cv2.destroyAllWindows.assert_called_once_with()
+
+
+    def test_quit_key_returns_normally_and_cleans_up(self):
+        camera = Mock()
+        camera.isOpened.return_value = True
+        camera.read.return_value = (True, Mock())
+        cv2 = Mock()
+        cv2.VideoCapture.return_value = camera
+        cv2.waitKey.return_value = ord("q")
+        model = Mock()
+        model.predict.return_value = [Mock()]
+        with patch.object(WEBCAM, "cv2", cv2), \
+                patch.object(WEBCAM, "YOLO", return_value=model), \
+                patch.object(WEBCAM, "resolve_model_path", return_value=Path("/model.pt")), \
+                patch.object(WEBCAM, "draw_detections", return_value=Mock()), \
+                patch("sys.argv", ["WebcamDetection.py"]), \
+                patch("builtins.print"):
+            self.assertIsNone(WEBCAM.main())
+        camera.read.assert_called_once_with()
+        model.predict.assert_called_once()
+        camera.release.assert_called_once_with()
+        cv2.destroyAllWindows.assert_called_once_with()
 
 
 if __name__ == "__main__":

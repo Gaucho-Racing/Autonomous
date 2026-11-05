@@ -101,8 +101,7 @@ def main():
         while True:
             ok, frame = cap.read()
             if not ok:
-                print("Failed to read frame from webcam.")
-                break
+                raise RuntimeError("Failed to read frame from webcam.")
 
             results = model.predict(frame, conf=args.conf, imgsz=args.imgsz, verbose=False)
             annotated = draw_detections(frame.copy(), results[0], args.conf)
