@@ -390,7 +390,9 @@ python3 "Python Detection Code/WebcamDetection.py" \
 
 `--conf` must be finite and between `0` and `1` inclusive; `--imgsz` must be a
 positive integer. Invalid values stop before model loading or camera access.
-Press `q` in the preview window to quit.
+Press `q` in the preview window to quit normally. Failure to open the camera or
+read a frame raises an error and exits unsuccessfully; the capture is released
+and preview windows are closed before the error propagates.
 
 Training outputs and datasets are intentionally ignored by Git. Only the TensorRT runtime contract and class mapping are required by `cone_nav`.
 
