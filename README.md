@@ -376,8 +376,10 @@ that choice. Apple MPS remains disabled by default.
 
 Training requires at least one regular `.jpg`, `.jpeg`, or `.png` file in each
 converted `train/images` and `val/images` folder; extensions are case-insensitive.
-Folders containing only other files or subdirectories stop before cache cleanup
-and model loading. This check does not verify image contents or labels.
+`fsoco.yaml` must be a file. A missing config file, a non-file config path,
+missing split folders, or splits with no matching image files raise
+`FileNotFoundError`, so the command exits unsuccessfully before cache cleanup and
+model loading. This check does not verify YAML contents, image contents, or labels.
 
 The webcam utility defaults to camera `0` and selects the first model file in its
 fallback list: YOLO26 `best.pt`, then legacy YOLOv8 `best.pt` and `last.pt`.
