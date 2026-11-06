@@ -49,7 +49,8 @@ class TrainingSetupTest(unittest.TestCase):
                     patch.object(Path, "iterdir", entries), \
                     patch.object(Path, "unlink", side_effect=AssertionError("Unexpected file removal")) as unlink, \
                     patch("builtins.print"):
-                TRAINING.train()
+                with self.assertRaises(FileNotFoundError):
+                    TRAINING.train()
                 yolo.assert_not_called()
                 unlink.assert_not_called()
 
@@ -72,7 +73,26 @@ class TrainingSetupTest(unittest.TestCase):
                     patch.object(Path, "exists", return_value=False), \
                     patch.object(Path, "unlink", side_effect=AssertionError("Unexpected file removal")) as unlink, \
                     patch("builtins.print"):
-                TRAINING.train()
+                with self.assertRaises(FileNotFoundError):
+                    TRAINING.train()
+                yolo.assert_not_called()
+                unlink.assert_not_called()
+
+    def test_empty_splits_report_missing_data(self):
+        train_images = TRAINING.DATA_DIR / "train" / "images"
+        val_images = TRAINING.DATA_DIR / "val" / "images"
+        for empty in (train_images, val_images):
+            with self.subTest(split=empty), \
+                    patch.object(TRAINING, "check_device", return_value="cpu"), \
+                    patch.object(TRAINING, "YOLO") as yolo, \
+                    patch.object(Path, "is_file", return_value=True), \
+                    patch.object(Path, "is_dir", return_value=True), \
+                    patch.object(Path, "iterdir", lambda path: iter([] if path == empty else [path / "frame.jpg"])), \
+                    patch.object(Path, "unlink", side_effect=AssertionError("Unexpected file removal")) as unlink, \
+                    patch("builtins.print"):
+                with self.assertRaises(FileNotFoundError) as failure:
+                    TRAINING.train()
+                self.assertIn(str(empty), str(failure.exception))
                 yolo.assert_not_called()
                 unlink.assert_not_called()
 

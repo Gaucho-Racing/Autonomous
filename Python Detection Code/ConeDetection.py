@@ -97,7 +97,7 @@ def train():
     if not DATA_CONFIG.is_file():
         print("\nDataset config not found.")
         print("Run ConvertToYOLO.py first to generate fsoco.yaml and data/yolo_format.")
-        return
+        raise FileNotFoundError(f"Dataset config not found: {DATA_CONFIG}")
 
     train_dir = DATA_DIR / "train" / "images"
     val_dir = DATA_DIR / "val" / "images"
@@ -109,14 +109,14 @@ def train():
     ):
         print(f"\nTraining data not found in: {train_dir}")
         print("Run ConvertToYOLO.py first.")
-        return
+        raise FileNotFoundError(f"Training images not found: {train_dir}")
     if not val_dir.is_dir() or not any(
         path.is_file() and path.suffix.lower() in (".jpg", ".jpeg", ".png")
         for path in val_dir.iterdir()
     ):
         print(f"\nValidation data not found in: {val_dir}")
         print("Run ConvertToYOLO.py first.")
-        return
+        raise FileNotFoundError(f"Validation images not found: {val_dir}")
 
     for cache_file in (train_cache, val_cache):
         if cache_file.exists():
