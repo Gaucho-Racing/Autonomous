@@ -338,6 +338,10 @@ validation sets. Once that minimum is met, conversion deletes and recreates
 preflight does not validate every image or annotation; processing failures or
 skipped samples can still leave an empty split after replacement.
 
+A missing or non-directory source raises `FileNotFoundError`; discovery of fewer
+than two image/annotation pairs raises `ValueError`. These preflight rejections
+exit unsuccessfully before output cleanup or config generation.
+
 Per-sample conversion failures are logged while remaining samples are processed.
 If any sample fails, the summary reports errors and the converter raises an error,
 so the command exits unsuccessfully. Successfully written files and any partial
