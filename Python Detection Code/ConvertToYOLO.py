@@ -164,7 +164,7 @@ def convert_dataset():
         print("\nDataset directory not found.")
         print(f"Expected location: {FSOCO_DIR}")
         print("Set FSOCO_DIR to override the source path.")
-        return
+        raise FileNotFoundError(f"Dataset directory not found: {FSOCO_DIR}")
 
     all_samples = find_samples()
 
@@ -175,11 +175,11 @@ def convert_dataset():
         print("    team1/")
         print("      img/")
         print("      ann/")
-        return
+        raise ValueError(f"No image-annotation pairs found in: {FSOCO_DIR}")
 
     if len(all_samples) < 2:
         print("\nAt least two image-annotation pairs are required for train/validation splits.")
-        return
+        raise ValueError("At least two image-annotation pairs are required for train/validation splits.")
 
     reset_output_dirs()
 

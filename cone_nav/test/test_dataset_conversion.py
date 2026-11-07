@@ -96,7 +96,8 @@ class DatasetConversionTest(unittest.TestCase):
                 patch.object(CONVERTER, "find_samples", side_effect=AssertionError("Invalid source read")), \
                 patch.object(CONVERTER, "write_data_config") as config, \
                 patch("builtins.print"):
-            CONVERTER.convert_dataset()
+            with self.assertRaisesRegex(FileNotFoundError, "Dataset directory"):
+                CONVERTER.convert_dataset()
             reset.assert_not_called()
             config.assert_not_called()
 
@@ -107,7 +108,8 @@ class DatasetConversionTest(unittest.TestCase):
                 patch.object(CONVERTER, "find_samples", return_value=[]), \
                 patch.object(CONVERTER, "write_data_config") as config, \
                 patch("builtins.print"):
-            CONVERTER.convert_dataset()
+            with self.assertRaisesRegex(ValueError, "No image-annotation pairs"):
+                CONVERTER.convert_dataset()
             reset.assert_not_called()
             config.assert_not_called()
 
@@ -119,7 +121,8 @@ class DatasetConversionTest(unittest.TestCase):
                 patch.object(CONVERTER, "tqdm", return_value=[]) as progress, \
                 patch.object(CONVERTER, "write_data_config") as config, \
                 patch("builtins.print"):
-            CONVERTER.convert_dataset()
+            with self.assertRaisesRegex(ValueError, "At least two"):
+                CONVERTER.convert_dataset()
             reset.assert_not_called()
             progress.assert_not_called()
             config.assert_not_called()
