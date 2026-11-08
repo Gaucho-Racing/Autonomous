@@ -113,5 +113,36 @@ class TrainingSetupTest(unittest.TestCase):
                 unlink.assert_not_called()
 
 
+    def test_completed_training_requires_checkpoint_file(self):
+        best = TRAINING.OUTPUT_DIR / TRAINING.RUN_NAME / "weights" / "best.pt"
+        for checkpoint in ("missing", "directory", "file"):
+            model, export_model = Mock(), Mock()
+            with self.subTest(checkpoint=checkpoint), \
+                    patch.object(TRAINING, "check_device", return_value="cpu"), \
+                    patch.object(TRAINING, "existing_checkpoint", return_value=None), \
+                    patch.object(TRAINING, "YOLO", side_effect=[model, export_model]) as yolo, \
+                    patch.object(Path, "is_dir", return_value=True), \
+                    patch.object(Path, "is_file", lambda path: path != best or checkpoint == "file"), \
+                    patch.object(Path, "exists", lambda path: path == best and checkpoint != "missing"), \
+                    patch.object(Path, "iterdir", lambda path: iter([path / "frame.jpg"])), \
+                    patch.object(Path, "unlink", side_effect=AssertionError("Unexpected file removal")) as unlink, \
+                    patch("builtins.print") as output:
+                if checkpoint == "file":
+                    TRAINING.train()
+                    self.assertEqual(yolo.call_count, 2)
+                    export_model.export.assert_called_once_with(
+                        format="onnx", imgsz=TRAINING.CONFIG["imgsz"], simplify=True
+                    )
+                else:
+                    with self.assertRaises(FileNotFoundError) as failure:
+                        TRAINING.train()
+                    self.assertIn(str(best), str(failure.exception))
+                    self.assertEqual(yolo.call_count, 1)
+                    export_model.export.assert_not_called()
+                    self.assertNotIn(unittest.mock.call("Training complete"), output.call_args_list)
+                model.train.assert_called_once()
+                unlink.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -175,16 +175,17 @@ def train():
     )
 
     best_model = OUTPUT_DIR / RUN_NAME / "weights" / "best.pt"
+    if not best_model.is_file():
+        raise FileNotFoundError(f"Trained checkpoint not found: {best_model}")
     print("\n" + "=" * 60)
     print("Training complete")
     print("=" * 60)
     print(f"Best model: {best_model}")
 
-    if best_model.exists():
-        print("\nExporting ONNX next to the trained weights...")
-        model_best = YOLO(str(best_model))
-        model_best.export(format="onnx", imgsz=CONFIG["imgsz"], simplify=True)
-        print(f"ONNX export expected at: {best_model.with_suffix('.onnx')}")
+    print("\nExporting ONNX next to the trained weights...")
+    model_best = YOLO(str(best_model))
+    model_best.export(format="onnx", imgsz=CONFIG["imgsz"], simplify=True)
+    print(f"ONNX export expected at: {best_model.with_suffix('.onnx')}")
 
     print("\nNext steps:")
     print("1. Validate with: yolo detect val model=models/fsoco_yolo26n/weights/best.pt data=fsoco.yaml")
