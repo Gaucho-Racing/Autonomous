@@ -378,6 +378,10 @@ loads weights into a new training run; the script does not request `resume=True`
 It selects CUDA when available, otherwise CPU; set `TRAIN_DEVICE` to override
 that choice. Apple MPS remains disabled by default.
 
+After training returns, `models/fsoco_yolo26n/weights/best.pt` must be a file
+before the script reports completion and attempts ONNX export. A missing path
+or a directory at that location raises `FileNotFoundError` instead.
+
 Training requires at least one regular `.jpg`, `.jpeg`, or `.png` file in each
 converted `train/images` and `val/images` folder; extensions are case-insensitive.
 `fsoco.yaml` must be a file. A missing config file, a non-file config path,
