@@ -224,9 +224,10 @@ def convert_dataset():
                 print(f"\nError processing {img_path}: {exc}")
 
     write_data_config()
+    empty_splits = [split for split in ("train", "val") if stats[split] == 0]
 
     print(f"\n{'=' * 60}")
-    print("Conversion finished with errors" if stats["errors"] else "Conversion complete")
+    print("Conversion finished with errors" if stats["errors"] or empty_splits else "Conversion complete")
     print(f"Train images: {stats['train']}")
     print(f"Val images: {stats['val']}")
     print(f"Total cones: {stats['cones']}")
@@ -236,6 +237,8 @@ def convert_dataset():
 
     if stats["errors"]:
         raise RuntimeError(f"{stats['errors']} image-annotation pair(s) failed during conversion.")
+    if empty_splits:
+        raise RuntimeError(f"No usable images written for splits: {', '.join(empty_splits)}")
 
 
 if __name__ == "__main__":

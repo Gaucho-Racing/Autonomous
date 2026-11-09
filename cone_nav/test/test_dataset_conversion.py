@@ -152,7 +152,7 @@ class DatasetConversionTest(unittest.TestCase):
         image_api.open.return_value.__enter__ = Mock(return_value=Mock(size=(100, 100)))
         image_api.open.return_value.__exit__ = Mock(return_value=False)
         with patch.object(CONVERTER, "FSOCO_DIR", root), \
-                patch.object(CONVERTER, "TRAIN_RATIO", 1.0), \
+                patch.object(CONVERTER, "TRAIN_RATIO", 0.75), \
                 patch.object(CONVERTER, "reset_output_dirs") as reset, \
                 patch.object(CONVERTER, "find_samples", return_value=samples), \
                 patch.object(CONVERTER.random, "shuffle"), \
@@ -223,6 +223,36 @@ class DatasetConversionTest(unittest.TestCase):
                 self.assertTrue(any(call.args[0] == images[1] for call in copy.call_args_list))
                 self.assertTrue(any(call.args[0].name.startswith("good_") for call in write.call_args_list))
                 config.assert_called_once_with()
+                self.assertNotIn(unittest.mock.call("Conversion complete"), output.call_args_list)
+
+    def test_conversion_rejects_empty_output_splits(self):
+        root = Path("/dataset")
+        images = [root / "team" / "first.jpg", root / "team" / "second.jpg"]
+        samples = [(image, image.with_suffix(".json")) for image in images]
+        label = ["0 0.5 0.5 0.2 0.2"]
+        cases = (([[], label], "train"), ([label, []], "val"), ([[], []], "train, val"))
+        for labels, empty in cases:
+            image_api = Mock()
+            image_api.open.return_value.__enter__ = Mock(return_value=Mock(size=(100, 100)))
+            image_api.open.return_value.__exit__ = Mock(return_value=False)
+            with self.subTest(empty=empty), \
+                    patch.object(CONVERTER, "FSOCO_DIR", root), \
+                    patch.object(CONVERTER, "reset_output_dirs"), \
+                    patch.object(CONVERTER, "find_samples", return_value=samples), \
+                    patch.object(CONVERTER.random, "shuffle"), \
+                    patch.object(CONVERTER, "tqdm", side_effect=lambda values: values), \
+                    patch.object(CONVERTER, "Image", image_api), \
+                    patch.object(Path, "is_dir", return_value=True), \
+                    patch.object(Path, "open", mock_open(read_data='{"objects": []}')), \
+                    patch.object(CONVERTER, "supervisely_to_yolo", side_effect=labels), \
+                    patch.object(CONVERTER.shutil, "copy") as copy, \
+                    patch.object(Path, "write_text") as write, \
+                    patch.object(CONVERTER, "write_data_config"), \
+                    patch("builtins.print") as output:
+                with self.assertRaisesRegex(RuntimeError, "No usable images.*" + empty):
+                    CONVERTER.convert_dataset()
+                self.assertEqual(copy.call_count, sum(bool(value) for value in labels))
+                self.assertEqual(write.call_count, copy.call_count)
                 self.assertNotIn(unittest.mock.call("Conversion complete"), output.call_args_list)
 
     def test_config_path_round_trips_special_characters(self):
