@@ -141,6 +141,19 @@ ros2 launch cone_nav real.launch.py avoidance_shadow_mode:=true
 ros2 launch cone_nav real.launch.py avoidance_enabled:=false
 ```
 
+## Record ZED video
+
+On a host with the ZED SDK Python bindings, set `SAVE_DIR` in
+`cone_nav/record_zed.py` before starting the standalone recorder:
+
+```bash
+python3 cone_nav/record_zed.py
+```
+
+Press Ctrl+C to stop. When the grab loop exits, the script disables recording
+and closes the camera, including after an unexpected exception. Unexpected
+exceptions still propagate after cleanup.
+
 ## Run in Isaac Sim
 
 The Isaac integration provides a Leatherback Ackermann vehicle, ZED 2i-like 0.12 m stereo pair, RGB, camera info, registered depth, `/clock`, cone corridor, collision obstacles, and native `/drive` control.
