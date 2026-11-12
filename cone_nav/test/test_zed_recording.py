@@ -37,6 +37,9 @@ class ZedRecordingTest(unittest.TestCase):
                 if outcome == "exception":
                     with self.assertRaisesRegex(RuntimeError, "Grab raised"):
                         runpy.run_path(str(SOURCE), run_name="__main__")
+                elif outcome == "failed_status":
+                    with self.assertRaisesRegex(RuntimeError, "Grab failed"):
+                        runpy.run_path(str(SOURCE), run_name="__main__")
                 else:
                     runpy.run_path(str(SOURCE), run_name="__main__")
                 camera.disable_recording.assert_called_once_with()
