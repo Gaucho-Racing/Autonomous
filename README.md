@@ -150,9 +150,10 @@ On a host with the ZED SDK Python bindings, set `SAVE_DIR` in
 python3 cone_nav/record_zed.py
 ```
 
-Press Ctrl+C to stop. When the grab loop exits, the script disables recording
-and closes the camera, including after an unexpected exception. Unexpected
-exceptions still propagate after cleanup.
+Press Ctrl+C to stop normally. A failed grab status raises `RuntimeError`, so
+the command exits unsuccessfully. When the grab loop exits, the script disables
+recording and closes the camera before grab failures or unexpected exceptions
+propagate.
 
 ## Run in Isaac Sim
 
