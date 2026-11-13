@@ -9,12 +9,14 @@ SOURCE = Path(__file__).resolve().parents[1] / "record_zed.py"
 
 
 class ZedRecordingTest(unittest.TestCase):
-    def test_recording_cleanup_on_grab_loop_exit(self):
-        for outcome in ("interrupt", "failed_status", "exception"):
+    def test_recording_cleanup_on_exit(self):
+        for outcome in ("interrupt", "failed_status", "exception", "startup_exception"):
             camera = Mock()
             camera.open.return_value = 0
             camera.enable_recording.return_value = 0
-            if outcome == "interrupt":
+            if outcome == "startup_exception":
+                camera.enable_recording.side_effect = RuntimeError("Recording startup raised")
+            elif outcome == "interrupt":
                 camera.grab.side_effect = KeyboardInterrupt
             elif outcome == "failed_status":
                 camera.grab.return_value = 1
@@ -34,6 +36,13 @@ class ZedRecordingTest(unittest.TestCase):
                     patch("os.makedirs") as mkdir, \
                     patch("time.sleep", side_effect=AssertionError("Unexpected retry")), \
                     patch("builtins.print"):
+                if outcome == "startup_exception":
+                    with self.assertRaisesRegex(RuntimeError, "Recording startup raised"):
+                        runpy.run_path(str(SOURCE), run_name="__main__")
+                    camera.close.assert_called_once_with()
+                    camera.disable_recording.assert_not_called()
+                    camera.grab.assert_not_called()
+                    continue
                 if outcome == "exception":
                     with self.assertRaisesRegex(RuntimeError, "Grab raised"):
                         runpy.run_path(str(SOURCE), run_name="__main__")

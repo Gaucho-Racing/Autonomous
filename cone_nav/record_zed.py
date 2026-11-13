@@ -27,12 +27,15 @@ while True:
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     svo_path = f"{SAVE_DIR}/zed_recording_{timestamp}.svo2"
 
-    recording_params = sl.RecordingParameters(
-        svo_path,
-        sl.SVO_COMPRESSION_MODE.H264
-    )
-
-    status = zed.enable_recording(recording_params)
+    try:
+        recording_params = sl.RecordingParameters(
+            svo_path,
+            sl.SVO_COMPRESSION_MODE.H264
+        )
+        status = zed.enable_recording(recording_params)
+    except BaseException:
+        zed.close()
+        raise
 
     if status != sl.ERROR_CODE.SUCCESS:
         print("Failed to start recording:", status)
