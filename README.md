@@ -151,9 +151,10 @@ python3 cone_nav/record_zed.py
 ```
 
 Press Ctrl+C to stop normally. A failed grab status raises `RuntimeError`, so
-the command exits unsuccessfully. When the grab loop exits, the script disables
-recording and closes the camera before grab failures or unexpected exceptions
-propagate.
+the command exits unsuccessfully. If recording setup raises after the camera
+opens, the script closes the camera before propagating the error. When the
+grab loop exits, the script attempts to disable recording and closes the
+camera even if disabling recording raises.
 
 ## Run in Isaac Sim
 
