@@ -55,6 +55,8 @@ while True:
     except KeyboardInterrupt:
         print("Stopping recording")
     finally:
-        zed.disable_recording()
-        zed.close()
+        try:
+            zed.disable_recording()
+        finally:
+            zed.close()
     break

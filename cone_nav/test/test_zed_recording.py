@@ -10,14 +10,16 @@ SOURCE = Path(__file__).resolve().parents[1] / "record_zed.py"
 
 class ZedRecordingTest(unittest.TestCase):
     def test_recording_cleanup_on_exit(self):
-        for outcome in ("interrupt", "failed_status", "exception", "startup_exception"):
+        for outcome in ("interrupt", "failed_status", "exception", "startup_exception", "finalization_exception"):
             camera = Mock()
             camera.open.return_value = 0
             camera.enable_recording.return_value = 0
             if outcome == "startup_exception":
                 camera.enable_recording.side_effect = RuntimeError("Recording startup raised")
-            elif outcome == "interrupt":
+            elif outcome in ("interrupt", "finalization_exception"):
                 camera.grab.side_effect = KeyboardInterrupt
+                if outcome == "finalization_exception":
+                    camera.disable_recording.side_effect = RuntimeError("Finalization raised")
             elif outcome == "failed_status":
                 camera.grab.return_value = 1
             else:
@@ -45,6 +47,9 @@ class ZedRecordingTest(unittest.TestCase):
                     continue
                 if outcome == "exception":
                     with self.assertRaisesRegex(RuntimeError, "Grab raised"):
+                        runpy.run_path(str(SOURCE), run_name="__main__")
+                elif outcome == "finalization_exception":
+                    with self.assertRaisesRegex(RuntimeError, "Finalization raised"):
                         runpy.run_path(str(SOURCE), run_name="__main__")
                 elif outcome == "failed_status":
                     with self.assertRaisesRegex(RuntimeError, "Grab failed"):
