@@ -10,11 +10,13 @@ SOURCE = Path(__file__).resolve().parents[1] / "record_zed.py"
 
 class ZedRecordingTest(unittest.TestCase):
     def test_recording_cleanup_on_exit(self):
-        for outcome in ("interrupt", "failed_status", "exception", "startup_exception", "finalization_exception"):
+        for outcome in ("interrupt", "failed_status", "exception", "startup_exception", "finalization_exception", "open_exception"):
             camera = Mock()
             camera.open.return_value = 0
             camera.enable_recording.return_value = 0
-            if outcome == "startup_exception":
+            if outcome == "open_exception":
+                camera.open.side_effect = RuntimeError("Camera open raised")
+            elif outcome == "startup_exception":
                 camera.enable_recording.side_effect = RuntimeError("Recording startup raised")
             elif outcome in ("interrupt", "finalization_exception"):
                 camera.grab.side_effect = KeyboardInterrupt
@@ -38,12 +40,15 @@ class ZedRecordingTest(unittest.TestCase):
                     patch("os.makedirs") as mkdir, \
                     patch("time.sleep", side_effect=AssertionError("Unexpected retry")), \
                     patch("builtins.print"):
-                if outcome == "startup_exception":
-                    with self.assertRaisesRegex(RuntimeError, "Recording startup raised"):
+                if outcome in ("open_exception", "startup_exception"):
+                    message = "Camera open raised" if outcome == "open_exception" else "Recording startup raised"
+                    with self.assertRaisesRegex(RuntimeError, message):
                         runpy.run_path(str(SOURCE), run_name="__main__")
                     camera.close.assert_called_once_with()
                     camera.disable_recording.assert_not_called()
                     camera.grab.assert_not_called()
+                    if outcome == "open_exception":
+                        camera.enable_recording.assert_not_called()
                     continue
                 if outcome == "exception":
                     with self.assertRaisesRegex(RuntimeError, "Grab raised"):

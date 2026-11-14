@@ -16,7 +16,11 @@ while True:
     init_params.camera_fps = 30
     init_params.depth_mode = sl.DEPTH_MODE.NONE
 
-    status = zed.open(init_params)
+    try:
+        status = zed.open(init_params)
+    except BaseException:
+        zed.close()
+        raise
 
     if status != sl.ERROR_CODE.SUCCESS:
         print("Camera not ready:", status)
