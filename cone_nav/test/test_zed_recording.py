@@ -95,7 +95,7 @@ class ZedRecordingTest(unittest.TestCase):
                     with self.assertRaisesRegex(RuntimeError, "Finalization raised"):
                         runpy.run_path(str(SOURCE), run_name="__main__")
                 elif outcome == "failed_status":
-                    with self.assertRaisesRegex(RuntimeError, "Grab failed"):
+                    with self.assertRaisesRegex(RuntimeError, "Grab failed.*1"):
                         runpy.run_path(str(SOURCE), run_name="__main__")
                 else:
                     runpy.run_path(str(SOURCE), run_name="__main__")

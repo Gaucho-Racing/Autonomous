@@ -52,10 +52,9 @@ while True:
 
     try:
         while True:
-            if zed.grab() == sl.ERROR_CODE.SUCCESS:
-                pass
-            else:
-                raise RuntimeError("Grab failed. Camera may have been unplugged.")
+            status = zed.grab()
+            if status != sl.ERROR_CODE.SUCCESS:
+                raise RuntimeError(f"Grab failed: {status}")
     except KeyboardInterrupt:
         print("Stopping recording")
     finally:
