@@ -309,7 +309,7 @@ class DatasetConversionTest(unittest.TestCase):
         root = Path("/dataset")
         team_a, team_z = root / "a", root / "z"
         images_a = [team_a / "img" / name for name in (
-            "c.PNG", "b.JPEG", "a.jpg", "backup.jpg.tmp", "folder.png", "unpaired.jpg"
+            "c.PNG", "b.JPEG", "a.jpg", "backup.jpg.tmp", "folder.png", "unpaired.jpg", "a.png"
         )]
         image_z = team_z / "img" / "z.jpeg"
         listings = {
@@ -319,6 +319,8 @@ class DatasetConversionTest(unittest.TestCase):
         }
         annotations = {
             team_a / "ann" / "a.jpg.json",
+            team_a / "ann" / "a.png.json",
+            team_a / "ann" / "a.json",
             team_a / "ann" / "b.json",
             team_a / "ann" / "c.json",
             team_a / "ann" / "backup.jpg.json",
@@ -327,7 +329,7 @@ class DatasetConversionTest(unittest.TestCase):
         }
         directories = {root, team_a, team_z, team_a / "img", team_a / "ann",
                        team_z / "img", team_z / "ann", images_a[4],
-                       team_a / "ann" / "a.json", team_a / "ann" / "unpaired.jpg.json"}
+                       team_a / "ann" / "unpaired.jpg.json"}
         with patch.object(CONVERTER, "FSOCO_DIR", root), \
                 patch.object(Path, "iterdir", lambda path: iter(listings[path])), \
                 patch.object(Path, "glob", lambda path, pattern: (
@@ -339,6 +341,7 @@ class DatasetConversionTest(unittest.TestCase):
             samples = CONVERTER.find_samples()
         self.assertEqual(samples, [
             (images_a[2], team_a / "ann" / "a.jpg.json"),
+            (images_a[-1], team_a / "ann" / "a.png.json"),
             (images_a[1], team_a / "ann" / "b.json"),
             (images_a[0], team_a / "ann" / "c.json"),
             (image_z, team_z / "ann" / "z.json"),
