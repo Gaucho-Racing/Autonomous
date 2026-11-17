@@ -380,8 +380,9 @@ and annotation files together directly in that team folder. Discovery uses the
 nested layout only when both paths are directories; otherwise it checks the flat
 layout. Images placed directly in `FSOCO_DIR` are not scanned.
 
-Annotation discovery tries `<image-stem>.json`, then `<image-filename>.json`,
-and accepts only files. Objects with invalid entry types, class-title types,
+Annotation discovery prefers `<image-filename>.json` (for example,
+`frame.jpg.json`) and falls back to `<image-stem>.json` when no matching file
+exists. Objects with invalid entry types, class-title types,
 point containers, or box coordinates are skipped, as are boxes with NaN or infinite
 coordinates. Other valid boxes in the same annotation are still converted.
 
